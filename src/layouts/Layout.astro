@@ -1,5 +1,7 @@
 ---
 import '../style.css';
+import 'katex/dist/katex.min.css';
+import { theorems } from '../theorems.ts';
 interface Props {
   title: string;
   description: string;
@@ -20,6 +22,7 @@ const navigation = [
   ['/sequences', '▦', 'Sequences', 8],
   ['/trigonometry', '∿', 'Trigonometry', 6],
   ['/color-math', '◐', 'Color math', 2],
+  ['/theorems', '∴', 'Theorems', theorems.length],
 ];
 ---
 

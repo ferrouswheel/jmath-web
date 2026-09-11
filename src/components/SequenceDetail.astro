@@ -1,4 +1,5 @@
 ---
+import { highlightCode } from '../code-highlight.ts';
 import type { Sequence } from '../types.ts';
 interface Props {
   sequence: Sequence;
@@ -187,6 +188,6 @@ const n = sequence.initial,
     class="code-source"
     tabindex="0"
     aria-label="Sequence implementation"
-  ><code id="sequence-code">{sequenceSnippet(sequence,"js",n)}</code></pre>
+  ><code id="sequence-code" data-code-language="js" set:html={highlightCode(sequenceSnippet(sequence,"js",n), "js")} /></pre>
   <p id="sequence-code-status" role="status"></p>
 </section>

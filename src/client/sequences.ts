@@ -1,3 +1,4 @@
+import { updateCode } from '../code-highlight.ts';
 import { $, $$ } from '../dom.ts';
 import { cSequenceLimit, sequenceSnippet } from '../sequence-snippets.ts';
 import { sequenceGeometry } from '../sequence-visuals.ts';
@@ -48,7 +49,11 @@ export function renderSequencePage(selectedSequence: Sequence | null) {
 
   $('#sequence-n').value = String(n);
   function renderCode() {
-    $('#sequence-code').textContent = sequenceSnippet(sequence, language, n);
+    updateCode(
+      $('#sequence-code'),
+      sequenceSnippet(sequence, language, n),
+      language,
+    );
     $('#sequence-code-note').textContent =
       language === 'c'
         ? `C uses uint64_t and accepts n = ${sequence.min}–${cSequenceLimit(sequence)}.${n > cSequenceLimit(sequence) ? ' The selected index exceeds that range; this example returns an error. JavaScript and Python support the selected term exactly.' : ''}`

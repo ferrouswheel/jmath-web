@@ -1,4 +1,5 @@
 ---
+import distributionProse from '../generated/distribution-prose.json' with { type: 'json' };
 import Layout from '../layouts/Layout.astro';
 import { distributions, defaults } from '../distributions.ts';
 import { distributionUrl } from '../routes.ts';
@@ -91,7 +92,7 @@ import { chart } from '../distribution-visuals.ts';
           <Fragment set:html={chart(d, defaults(d), false, true)} />
           <div class="card-name">{d.name}</div>
           <div class="notation">{d.notation}</div>
-          <p>{d.description}</p>
+          <div set:html={(distributionProse as Record<string, string>)[d.id]} />
           <div class="card-tags">
             {d.tags.map((t) => (
               <span>{t}</span>

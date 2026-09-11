@@ -1,3 +1,4 @@
+import { updateCode } from '../code-highlight.ts';
 import { $, $$, errorMessage } from '../dom.ts';
 import { PI } from '../trig-math.ts';
 import { trigSnippet } from '../trig-snippets.ts';
@@ -21,7 +22,11 @@ export function renderTrigPage(requested: TrigFunction | null) {
     input = item.initial * (item.inverse || unit === 'radians' ? 1 : 180 / PI);
   let codeInput = item.initial;
   function renderCode() {
-    $('#trig-code').textContent = trigSnippet(item, language, codeInput);
+    updateCode(
+      $('#trig-code'),
+      trigSnippet(item, language, codeInput),
+      language,
+    );
     $$('[data-trig-language]').forEach((b) => {
       const active = b.dataset.trigLanguage! === language;
       b.setAttribute('aria-pressed', String(active));

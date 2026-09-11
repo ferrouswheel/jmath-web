@@ -1,0 +1,95 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { theorems } from '../../theorems.ts';
+export function getStaticPaths() {
+  return theorems.map((theorem) => ({
+    params: { slug: theorem.id },
+    props: { theorem },
+  }));
+}
+const { theorem: t } = Astro.props;
+---
+
+<Layout
+  title={t.title}
+  description={t.description}
+  section="/theorems"
+  id="theorem-page"
+>
+  <a class="theorem-backlink" href="/theorems">
+    ← All theorems
+  </a>
+  <article class="theorem-detail">
+    <header class="theorem-header">
+      <div class="theorem-meta">
+        <span>{t.sectionName}</span>
+        <span class="theorem-meta-separator" aria-hidden="true">
+          ·
+        </span>
+        <span>{t.kind}</span>
+      </div>
+      <h1>{t.title}</h1>
+      <div
+        class="theorem-prose theorem-description"
+        set:html={t.html.description}
+      />
+    </header>
+    <nav class="theorem-contents theorem-page-nav" aria-label="On this page">
+      <span class="theorem-contents-label">On this page</span>
+      <div class="theorem-jump-links">
+        <a href="#statement">Statement</a>
+        <a href="#history">History</a>
+        <a href="#example">Worked example</a>
+        <a href="#proof">Proof sketch</a>
+        <a href="#related-pages">Related pages</a>
+      </div>
+    </nav>
+    <section id="statement" class="theorem-card">
+      <h2>Statement and conditions</h2>
+      <div class="theorem-prose" set:html={t.html.conditions} />
+      <div
+        class="theorem-statement theorem-prose"
+        set:html={t.html.statement}
+      />
+    </section>
+    <section id="history">
+      <h2>History and context</h2>
+      <div class="theorem-prose" set:html={t.html.history} />
+      <a
+        class="theorem-reference"
+        href={t.historyReference.url}
+        target="_blank"
+        rel="noreferrer"
+      >
+        {t.historyReference.label} ↗
+      </a>
+    </section>
+    <section id="example">
+      <h2>Worked example</h2>
+      <div class="theorem-prose" set:html={t.html.example} />
+    </section>
+    <section id="proof">
+      <h2>Proof sketch</h2>
+      <div class="theorem-prose" set:html={t.html.proof} />
+      <a
+        class="theorem-reference"
+        href={t.reference.url}
+        target="_blank"
+        rel="noreferrer"
+      >
+        {t.reference.label} ↗
+      </a>
+    </section>
+    <section id="related-pages">
+      <h2>Related pages</h2>
+      <p>Explore the quantities and functions used in this result.</p>
+      <div class="theorem-related">
+        {t.pages.map((page) => (
+          <a class="quiet-button" href={page.url}>
+            {page.name} →
+          </a>
+        ))}
+      </div>
+    </section>
+  </article>
+</Layout>

@@ -1,0 +1,48 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { theorems, theoremUrl } from '../../theorems.ts';
+const sections = [...new Set(theorems.map((t) => t.sectionName))];
+---
+
+<Layout
+  title="Theorems and identities"
+  description="Explore mathematical results, their history, worked examples, and proofs."
+  section="/theorems"
+  id="theorems-page"
+>
+  <header class="intro">
+    <div>
+      <div class="eyebrow">MATHEMATICAL REFERENCE</div>
+      <h1>Theorems and identities</h1>
+      <p>
+        Discover the ideas behind the calculators: statements, historical
+        context, examples, and proof sketches.
+      </p>
+    </div>
+  </header>
+  <nav class="theorem-contents" aria-label="Theorem topics">
+    {sections.map((section) => (
+      <a href={`#${section.toLowerCase()}`}>{section}</a>
+    ))}
+  </nav>
+  {sections.map((section) => (
+    <section class="related-theorems" id={section.toLowerCase()}>
+      <h2>{section}</h2>
+      <div class="theorem-grid">
+        {theorems
+          .filter((t) => t.sectionName === section)
+          .map((t) => (
+            <article class="theorem-card">
+              <span class="theorem-kind">
+                {t.pages[0].name} · {t.kind}
+              </span>
+              <h3>
+                <a href={theoremUrl(t)}>{t.title} →</a>
+              </h3>
+              <div set:html={t.html.description} />
+            </article>
+          ))}
+      </div>
+    </section>
+  ))}
+</Layout>

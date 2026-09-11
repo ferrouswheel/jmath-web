@@ -1,3 +1,4 @@
+import { updateCode } from '../code-highlight.ts';
 import { chart, fmt } from '../distribution-visuals.ts';
 import {
   defaults,
@@ -205,7 +206,15 @@ function initializePage() {
   if (isDistributionPage) {
     const linkedValues = { ...values };
     for (const p of selected.params) {
-      const raw = new URLSearchParams(location.search).get(p.key);
+      // Preserve edits made to the server-rendered controls before this module loads.
+      const input = $(`[data-param="${p.key}"]`);
+      const range = $(`[data-range="${p.key}"]`);
+      const raw =
+        input.value !== input.defaultValue
+          ? input.value
+          : range.value !== range.defaultValue
+            ? range.value
+            : new URLSearchParams(location.search).get(p.key);
       if (raw !== null)
         linkedValues[p.key] = raw.trim() === '' ? NaN : Number(raw);
     }
@@ -278,10 +287,10 @@ function initializePage() {
 initializePage();
 
 function updateSnippet() {
-  $('#snippet-code').textContent = snippetSource(
-    selected,
+  updateCode(
+    $('#snippet-code'),
+    snippetSource(selected, snippetLanguage, values),
     snippetLanguage,
-    values,
   );
   $('#code-algorithm').textContent = algorithms[selected.id];
   $('#code-note').textContent =

@@ -1,4 +1,5 @@
 ---
+import { highlightCode } from '../code-highlight.ts';
 import {
   colorLanguages,
   colorAlgorithm,
@@ -54,7 +55,7 @@ const example = conversion
   <pre
     class="code-source"
     tabindex="0"
-  ><code id="color-code">{algorithm}</code></pre>
+  ><code id="color-code" data-code-language="js" set:html={highlightCode(algorithm, "js")} /></pre>
   <h3 id="color-example-title">Example</h3>
   <p id="color-example-note" class="color-small">
     Copy code includes the functions and this example.
@@ -62,6 +63,6 @@ const example = conversion
   <pre
     class="code-source color-code-example"
     tabindex="0"
-  ><code id="color-example">{example}</code></pre>
+  ><code id="color-example" data-code-language="js" set:html={highlightCode(example, "js")} /></pre>
   <p id="color-code-status" role="status"></p>
 </section>

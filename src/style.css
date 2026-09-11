@@ -51,7 +51,7 @@ button {
     border-color 0.15s,
     box-shadow 0.15s;
 }
-header {
+.header {
   height: 80px;
   background: #fff;
   border-bottom: 1px solid #e7e9ee;
@@ -908,7 +908,7 @@ footer strong {
   }
 }
 @media (max-width: 600px) {
-  header {
+  .header {
     height: 64px;
     padding: 0 20px;
   }
@@ -1173,6 +1173,53 @@ footer strong {
   font-size: 11px;
   line-height: 1.7;
   color: #737987;
+}
+.code-source .hljs-keyword,
+.code-source .hljs-selector-tag {
+  color: #823bb1;
+}
+.code-source .hljs-string,
+.code-source .hljs-regexp {
+  color: #176843;
+}
+.code-source .hljs-number,
+.code-source .hljs-literal {
+  color: #a34816;
+}
+.code-source .hljs-title,
+.code-source .hljs-built_in {
+  color: #245a9c;
+}
+.code-source .hljs-comment {
+  color: #6b7280;
+  font-style: italic;
+}
+.code-source .hljs-meta,
+.code-source .hljs-type {
+  color: #96600c;
+}
+.code-source .hljs-params,
+.code-source .hljs-subst {
+  color: #45415e;
+}
+.theorem-prose .katex,
+.theorem-card .katex {
+  font-size: 1.12em;
+}
+.theorem-card .katex-display,
+.theorem-prose .katex-display {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px 0;
+  margin: 8px 0;
+}
+.theorem-detail .theorem-statement {
+  padding: 22px 18px;
+  margin-top: 20px;
+}
+.theorem-detail .theorem-prose > p + p {
+  margin-top: 14px;
 }
 #copy-status {
   color: #6253ad;
@@ -2192,6 +2239,14 @@ footer strong {
   margin-top: 30px;
   scroll-margin-top: 24px;
 }
+.explorer > .related-theorems {
+  padding-inline: 27px;
+}
+@media (max-width: 600px) {
+  .explorer > .related-theorems {
+    padding-inline: 16px;
+  }
+}
 .related-theorems > h2 {
   font-size: 18px;
   margin: 0 0 10px;
@@ -2297,6 +2352,159 @@ footer strong {
 }
 .related-theorems + .code-section {
   margin-top: 24px;
+}
+
+.theorem-detail {
+  max-width: 820px;
+  overflow-wrap: anywhere;
+}
+.theorem-backlink {
+  display: inline-block;
+  margin-bottom: 26px;
+  font-size: 13px;
+  color: #737987;
+}
+.theorem-backlink:hover {
+  color: #665489;
+  text-decoration: underline;
+}
+.theorem-header {
+  padding: 0 0 26px;
+}
+.theorem-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #776797;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+.theorem-meta-separator {
+  color: #b6afc4;
+}
+.theorem-header h1 {
+  max-width: 26ch;
+  margin: 12px 0 18px;
+  font-size: clamp(28px, 3.5vw, 42px);
+  line-height: 1.18;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+  overflow-wrap: normal;
+}
+.theorem-description {
+  max-width: 68ch;
+  color: #697181;
+  font-size: 16px;
+  line-height: 1.75;
+}
+.theorem-description p {
+  margin: 0;
+}
+.theorem-detail > section {
+  margin-top: 30px;
+  scroll-margin-top: 24px;
+}
+.theorem-detail h2 {
+  font-size: 20px;
+  margin: 0 0 12px;
+}
+.theorem-detail section p {
+  font-size: 15px;
+  line-height: 1.9;
+  color: #555e70;
+}
+.theorem-detail .theorem-statement {
+  font-size: 21px;
+  color: #51475f;
+}
+.theorem-card .theorem-statement p {
+  font: inherit;
+  color: inherit;
+  margin: 0;
+}
+.theorem-card .theorem-statement > .katex-display + p {
+  font:
+    14px/1.8 Manrope,
+    sans-serif;
+  color: #555e70;
+  margin-top: 16px;
+}
+.theorem-prose ul,
+.theorem-prose ol {
+  padding-left: 24px;
+  line-height: 1.9;
+}
+.theorem-prose a {
+  color: #665489;
+  text-decoration: underline;
+}
+.theorem-prose pre {
+  overflow-x: auto;
+  padding: 16px;
+  background: #f7f5fb;
+}
+.theorem-contents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 22px;
+  padding: 18px 0;
+  border-block: 1px solid #e1e4ec;
+  font-size: 13px;
+  color: #665489;
+}
+.theorem-contents a:hover,
+.theorem-related a:hover {
+  text-decoration: underline;
+}
+.theorem-contents.theorem-page-nav {
+  display: block;
+  padding: 18px 0 20px;
+}
+.theorem-contents-label {
+  display: block;
+  margin-bottom: 10px;
+  color: #838795;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.theorem-jump-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.theorem-jump-links a {
+  display: block;
+  padding: 9px 13px;
+  border: 1px solid #e2dfea;
+  border-radius: 6px;
+  background: #fff;
+  color: #665489;
+  line-height: 1.4;
+}
+.theorem-jump-links a:hover {
+  background: #f0edf8;
+  border-color: #c9c1dc;
+  text-decoration: none;
+}
+@media (max-width: 600px) {
+  .theorem-backlink {
+    margin-bottom: 22px;
+  }
+  .theorem-description {
+    font-size: 15px;
+  }
+  .theorem-jump-links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.theorem-detail .theorem-reference,
+.theorem-detail .theorem-related a {
+  font-size: 13px;
 }
 
 .trig-function-nav {

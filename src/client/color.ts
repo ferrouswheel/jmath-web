@@ -1,3 +1,4 @@
+import { updateCode } from '../code-highlight.ts';
 import {
   conversionAlgorithm,
   conversionExample,
@@ -54,10 +55,8 @@ function bindCode(
           settings && 'gain' in settings ? settings : null,
         );
     // Preserve code selection and scroll position while controls change.
-    if ($('#color-code').textContent !== algorithm)
-      $('#color-code').textContent = algorithm;
-    if ($('#color-example').textContent !== example)
-      $('#color-example').textContent = example;
+    updateCode($('#color-code'), algorithm, language);
+    updateCode($('#color-example'), example, language);
     $('#color-example-title').textContent = conversion
       ? 'Example using the selected conversion'
       : settings

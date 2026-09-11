@@ -1,4 +1,5 @@
 ---
+import { highlightCode } from '../code-highlight.ts';
 import type { TrigFunction } from '../types.ts';
 interface Props {
   item: TrigFunction;
@@ -159,6 +160,6 @@ const angle = item.inverse ? item.fn(item.initial) : item.initial;
   <pre
     class="code-source"
     tabindex="0"
-  ><code id="trig-code">{trigSnippet(item,"js",item.initial)}</code></pre>
+  ><code id="trig-code" data-code-language="js" set:html={highlightCode(trigSnippet(item,"js",item.initial), "js")} /></pre>
   <p id="trig-copy-status" role="status"></p>
 </section>

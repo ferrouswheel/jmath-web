@@ -1,4 +1,5 @@
 ---
+import { highlightCode } from '../code-highlight.ts';
 import type { Distribution } from '../types.ts';
 interface Props {
   d: Distribution;
@@ -189,7 +190,7 @@ const values = defaults(d),
     class="code-source"
     tabindex="0"
     aria-label="Implementation code"
-  ><code id="snippet-code">{snippetSource(d,"js",values)}</code></pre>
+  ><code id="snippet-code" data-code-language="js" set:html={highlightCode(snippetSource(d,"js",values), "js")} /></pre>
   <div class="code-footer">
     <span id="code-note"></span>
     <span id="copy-status" role="status"></span>

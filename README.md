@@ -87,7 +87,7 @@ Definitions and geometric data are in `src/sequences.ts`, SVG rendering in `src/
 
 ## Extending the catalogue
 
-Add an entry in `src/distributions.ts` or its `src/more-distributions.ts` registry with metadata, parameter limits, density/mass and CDF functions, plotting range, statistics, sampling function, and reference. Page markup is in `src/components/Distribution.astro` and interactions are in `src/client/distributions.ts`. Catalogue counts update automatically. Add the three implementation files in `snippets/distributions/` and the algorithm explanation in `src/snippets.ts`. Integer parameters use `integer: true`; cross-parameter bounds use `constraints`. Distributions without a finite mean provide `exampleX` for calculator and snippet defaults. Optional `plotKnots` add points near peaks or discontinuities. Keep mathematical tests in `tests/`.
+Add a Markdown document in `src/content/distributions/` for metadata and parameters, then register its numerical implementation in `src/distributions.ts` or `src/more-distributions.ts` using `distributionMetadata(id)`. Keep density/mass, CDF, plotting range, statistics, and sampling functions in TypeScript. Page markup is in `src/components/Distribution.astro` and interactions are in `src/client/distributions.ts`. Catalogue counts update automatically. Add the three implementation files in `snippets/distributions/` and the algorithm explanation in `src/snippets.ts`. Integer parameters use `integer: true`; cross-parameter bounds use `constraints`. Distributions without a finite mean provide `exampleX` for calculator and snippet defaults. Optional `plotKnots` add points near peaks or discontinuities. Keep mathematical tests in `tests/`.
 
 The normal and lognormal CDFs use a numerical approximation (absolute error approximately 1e-7). Plots show a finite range; unbounded tails continue beyond the view. Cauchy and Pareto display undefined or infinite moments explicitly. For Weibull shape below 1, the density diverges at zero, so the graph starts at the 0.5th percentile and labels this omission. Weibull moments use a Lanczos gamma approximation. Sample generators are for exploration and simulation, not cryptographic use. Controls intentionally bound parameters to keep computation responsive; those UI limits are not the full mathematical domains. Samples stay in the browser. Google Fonts are optional and fall back to system sans-serif fonts.
 
@@ -95,9 +95,9 @@ Mathematical references: [NIST distribution gallery](https://www.itl.nist.gov/di
 
 Snippet tests execute JavaScript and Python examples and compile C with warnings treated as errors, then verify densities, sample moments where finite, and empirical cumulative probabilities at default and boundary parameters. All 51 language/distribution combinations are exercised. Python 3 and a C compiler (`cc`) are required for their respective checks; unavailable runtimes are reported as skipped.
 
-Sequence pages include related theorems and identities with explicit conditions, fixed worked examples, expandable proof sketches, and source links. Content lives in `src/sequence-theorems.ts`; each result has a stable `#theorem-<id>` link.
+Sequence pages link to related theorems and identities with explicit conditions. Statements, worked examples, proof sketches, and references live in `src/content/theorems/`. Existing `#theorem-<id>` links still land on the corresponding summary card.
 
-All 17 distribution pages include two related results in `src/distribution-theorems.ts`, with assumptions, fixed examples, proof sketches, and references. Distribution and sequence pages share `src/theorem-view.ts` and support direct `#theorem-<id>` links.
+All 17 distribution pages include two related results from `src/content/theorems/`, with assumptions, fixed examples, proof sketches, and references. Distribution, sequence, and trigonometry pages share `src/theorem-view.ts` and link to dedicated `/theorems/<id>` pages.
 
 Trigonometry is available at `/trigonometry` and `/trigonometry/{sin,cos,tan,arcsin,arccos,arctan}`. Each page includes a radians/degrees calculator, graph, unit circle, exact-value table, principal domains/ranges, derivative, identities and direct JS/Python/C algorithms. Query parameters `x` and `unit` preserve calculator state. Numerical implementations use arithmetic series and standard square roots (no built-in trig); direct angles are limited to ±10000 radians and tangent rejects |cos θ| < 1e-12. Results are floating-point approximations. These URLs are generated as individual static pages.
 
@@ -106,3 +106,33 @@ Color math: `/color-math`, `/color-math/converter`, and `/color-math/image`. Sev
 Image-adjustment snippets keep reusable parameterized algorithms separate from the live settings example. Copy code combines the stable function and the current example in the selected language.
 
 The color-space converter includes complete standalone JavaScript, Python, and C algorithms for all 49 source/target combinations. Named source and target spaces and input coordinates live in a separate usage block, so selecting a different conversion does not rewrite the algorithm. All implementations share the same matrix constants, scales, input bounds, D50/D65 adaptation, and out-of-gamut handling as the calculator.
+
+## Theorem pages and content
+
+`/theorems` lists all 62 results, grouped by distributions, sequences, and trigonometry. Each `/theorems/<id>` page contains a description, statement and conditions, history and context with a source, worked example, proof sketch, and links to its originating and related explorer pages. All content and navigation work without JavaScript.
+
+The source of truth is Markdown with YAML frontmatter; there is no database.
+
+- `src/content/distributions/*.md`: one distribution per file. Frontmatter holds names, formulas, parameter labels/defaults/bounds, constraints, tags, and references. The Markdown body is its description. Numerical functions stay in `src/distributions.ts` and `src/more-distributions.ts`, joined by ID.
+- `src/content/theorems/*.md`: one theorem per file, combining metadata, relationships, description, conditions, statement, history, example, and proof. There is no separate notes file.
+- `src/theorems.ts`: resolves document relationships to explorer pages. The old distribution/sequence theorem modules are small compatibility adapters, not content sources. Trigonometry also loads its theorems from Markdown.
+
+For example, edit `src/content/theorems/central-limit.md` or `src/content/distributions/normal.md`.
+
+### Authoring a theorem
+
+Copy an existing theorem document and set a unique lowercase, hyphenated `id` matching its filename. Frontmatter contains `title`, `kind`, `order`, `owner`, `related`, `reference`, and optionally `historyReference` (defaults to `reference`). Reference objects contain `label` and an HTTPS `url`. `order` controls listing order; ties sort by ID.
+
+`owner` identifies the explorer whose theorem section contains the card, for example `distributions/normal`. `related` lists other explorer paths without a leading slash, such as `sequences/squares` or `trigonometry/cos`. Links may cross sections. The theorem page links back to its owner and all related pages. Owners and related pages must exist; related entries must be unique and must exclude the owner.
+
+Keep these six level-two headings: `Description`, `Conditions`, `Statement`, `History`, `Worked example`, and `Proof sketch`. Their bodies support ordinary Markdown, including emphasis, links, lists, lower-level headings, and fenced code blocks. The page template gives them stable navigation anchors. Use `$...$` for inline LaTeX and a pair of `$$` lines for display equations (see `central-limit.md`). Equations are rendered by KaTeX during content generation, with local fonts and accessible MathML; malformed LaTeX fails the build with the document filename. Plain prose and code fences remain ordinary Markdown.
+
+### Loading and validation
+
+`npm run content` validates frontmatter and required sections, then generates ignored data files in `src/generated/`. These files are build artifacts: **edit the Markdown, not the JSON**. Content generation runs automatically before build, check, test, and development commands; the Astro config also generates it for direct Astro commands. The development server watches document additions, edits, and removals. There is no manual index to update and no YAML/Markdown parser in the browser.
+
+Schemas in `scripts/content.mjs` reject unknown metadata fields, missing sections, invalid parameter defaults, duplicate YAML keys, and mismatched filenames. The page catalogue checks related-page targets; the distribution registry checks that every metadata document has a numerical implementation. New theorem documents automatically create index entries and static routes. New distributions also need a numerical implementation and the existing snippet/test registration described above.
+
+Run `npm run build` for full content, link, and TypeScript validation, `npm test` for parser and numerical tests, and `npm run test:e2e` for browser regressions. After rebuilding, `npm run preview` serves the generated site.
+
+Implementation panels use a shared Highlight.js renderer with JavaScript, Python, and C grammars only. Initial HTML is highlighted at build time; language and parameter changes re-highlight the current source. Copy actions read plain text, so highlighting never changes the copied algorithm.
