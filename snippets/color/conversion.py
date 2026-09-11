@@ -144,8 +144,11 @@ def rgb_to_cylinder(rgb, hsv):
         elif maximum == rgb[1]: hue = (rgb[2] - rgb[0]) / delta + 2
         else: hue = (rgb[0] - rgb[1]) / delta + 4
         hue = (hue * 60 + 360) % 360
-    if hsv: saturation = 0 if maximum == 0 else delta / maximum
-    else: saturation = 0 if delta == 0 else delta / (1 - abs(2 * lightness - 1))
+    # Below the achromatic threshold, delta and its denominators shrink together;
+    # their ratio is float noise, not a real saturation.
+    if delta <= 1e-12: saturation = 0
+    elif hsv: saturation = delta / maximum
+    else: saturation = delta / (1 - abs(2 * lightness - 1))
     return [hue, saturation * 100, (maximum if hsv else lightness) * 100]
 
 def cube_root(x):

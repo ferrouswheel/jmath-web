@@ -277,8 +277,10 @@ function rgbToCylinder(rgb, hsv) {
     else hue = (rgb[0] - rgb[1]) / delta + 4;
     hue = (hue * 60 + 360) % 360;
   }
-  const saturation = hsv ? (max === 0 ? 0 : delta / max)
-    : (delta === 0 ? 0 : delta / (1 - Math.abs(2 * lightness - 1)));
+  // Below the achromatic threshold, delta and its denominators shrink together;
+  // their ratio is float noise, not a real saturation.
+  const saturation = delta <= 1e-12 ? 0
+    : hsv ? delta / max : delta / (1 - Math.abs(2 * lightness - 1));
   return [hue, saturation * 100, (hsv ? max : lightness) * 100];
 }
 function xyzToLab(xyz) {

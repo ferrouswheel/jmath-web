@@ -98,16 +98,12 @@ function rgbToCylinder(rgb: number[], hsv: boolean) {
           : (rgb[0] - rgb[1]) / d + 4);
     h = (h + 360) % 360;
   }
+  // Below the achromatic threshold, d and its denominators shrink together;
+  // their ratio is float noise, not a real saturation.
   return [
     h,
     100 *
-      (hsv
-        ? max === 0
-          ? 0
-          : d / max
-        : d === 0
-          ? 0
-          : d / (1 - Math.abs(2 * l - 1))),
+      (d <= 1e-12 ? 0 : hsv ? d / max : d / (1 - Math.abs(2 * l - 1))),
     100 * (hsv ? max : l),
   ];
 }

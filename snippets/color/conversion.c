@@ -56,8 +56,11 @@ void rgb_to_cylinder(const double rgb[3], bool hsv, double out[3]) {
         else hue = (rgb[0] - rgb[1]) / delta + 4;
         hue = fmod(hue * 60 + 360, 360);
     }
-    if (hsv) saturation = maximum == 0 ? 0 : delta / maximum;
-    else saturation = delta == 0 ? 0 : delta / (1 - fabs(2 * lightness - 1));
+    // Below the achromatic threshold, delta and its denominators shrink together;
+    // their ratio is float noise, not a real saturation.
+    if (delta <= 1e-12) saturation = 0;
+    else if (hsv) saturation = delta / maximum;
+    else saturation = delta / (1 - fabs(2 * lightness - 1));
     out[0] = hue;
     out[1] = saturation * 100;
     out[2] = (hsv ? maximum : lightness) * 100;
