@@ -27,13 +27,6 @@ const angle = item.inverse ? item.fn(item.initial) : item.initial;
     Related identities ↓
   </a>
 </section>
-<nav class="trig-function-nav" aria-label="Trigonometric functions">
-  {trigFunctions.map((f) => (
-    <a href={trigUrl(f)} aria-current={f.id === item.id ? 'page' : undefined}>
-      {f.id}
-    </a>
-  ))}
-</nav>
 <section class="trig-calculator">
   <div class="trig-controls">
     <h2>Calculator</h2>
@@ -114,16 +107,6 @@ const angle = item.inverse ? item.fn(item.initial) : item.initial;
           : ''
       }
     />
-    <div class="theorem-related">
-      <Fragment
-        set:html={item.related
-          .map((id) => {
-            const f = trigFunctions.find((f) => f.id === id)!;
-            return `<a href="${trigUrl(f)}">${f.name} →</a>`;
-          })
-          .join('')}
-      />
-    </div>
   </div>
 </section>
 <Fragment set:html={exactTable(item)} />

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { snippetFile as distributions } from '../src/snippet-files/distributions.ts';
 import { snippetFile as sequences } from '../src/snippet-files/sequences.ts';
 import { snippetFile as trigonometry } from '../src/snippet-files/trigonometry.ts';
+import { snippetFile as curves } from '../src/snippet-files/curves.ts';
 import { snippetFile as color } from '../src/snippet-files/color.ts';
 
 // Fail when a required runtime/compiler is missing: snippets are part of the product.
@@ -16,6 +17,7 @@ test('all standalone snippet files parse or compile and are displayed verbatim',
     sequences,
     trigonometry,
     color,
+    curves,
   })) {
     const directory = new URL(`../snippets/${group}/`, import.meta.url);
     for (const name of readdirSync(directory)) {
@@ -48,5 +50,5 @@ test('all standalone snippet files parse or compile and are displayed verbatim',
       count++;
     }
   }
-  assert.equal(count, 102);
+  assert.equal(count, 114);
 });

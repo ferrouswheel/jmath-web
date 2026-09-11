@@ -2,6 +2,7 @@
 import '../style.css';
 import 'katex/dist/katex.min.css';
 import { theorems } from '../theorems.ts';
+import { curves } from '../curves.ts';
 interface Props {
   title: string;
   description: string;
@@ -21,6 +22,7 @@ const navigation = [
   ['/random-tools', '⚄', 'Dice & coins', 2],
   ['/sequences', '▦', 'Sequences', 8],
   ['/trigonometry', '∿', 'Trigonometry', 6],
+  ['/curves', '⌁', 'Curves', curves.length],
   ['/color-math', '◐', 'Color math', 2],
   ['/theorems', '∴', 'Theorems', theorems.length],
 ];

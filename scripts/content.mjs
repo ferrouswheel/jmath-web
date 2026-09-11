@@ -39,7 +39,7 @@ const reference = z
   .strict();
 const page = z
   .string()
-  .regex(/^(distributions|sequences|trigonometry)\/[a-z0-9-]+$/);
+  .regex(/^(distributions|sequences|trigonometry|curves)\/[a-z0-9-]+$/);
 const parameter = z
   .object({
     key: text,
@@ -115,6 +115,40 @@ const theorem = z
     historyReference: reference.optional(),
   })
   .strict();
+const point = z.tuple([z.number().min(-5).max(5), z.number().min(-5).max(5)]);
+const curve = z
+  .object({
+    id: z.enum(['linear', 'quadratic', 'cubic', 'bezier']),
+    name: text,
+    description: text,
+    order: z.number().int(),
+    color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+    reference,
+    input: z.number().min(-5).max(5),
+    coefficients: z.array(z.number().min(-5).max(5)).optional(),
+    points: z.array(point).length(4).optional(),
+    quadraticPoints: z.array(point).length(3).optional(),
+    related: z.array(z.enum(['linear', 'quadratic', 'cubic', 'bezier'])),
+  })
+  .strict()
+  .superRefine((c, ctx) => {
+    const length = { linear: 2, quadratic: 3, cubic: 4 }[c.id];
+    if (
+      c.id === 'bezier'
+        ? !c.points ||
+          !c.quadraticPoints ||
+          c.input < 0 ||
+          c.input > 1 ||
+          c.coefficients
+        : c.coefficients?.length !== length || c.points || c.quadraticPoints
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        message:
+          'Curve defaults must match its polynomial degree or Bézier control points',
+      });
+    }
+  });
 const sectionKeys = {
   Description: 'description',
   Conditions: 'conditions',
@@ -133,13 +167,22 @@ export function parseContent(source, file, kind) {
     const document = parseDocument(match[1]);
     if (document.errors.length)
       throw new Error(document.errors.map((e) => e.message).join('\n'));
-    const data = (kind === 'distributions' ? distribution : theorem).parse(
-      document.toJS(),
-    );
+    const data = (
+      kind === 'distributions'
+        ? distribution
+        : kind === 'curves'
+          ? curve
+          : theorem
+    ).parse(document.toJS());
     if (basename(file, '.md') !== data.id.replaceAll('_', '-'))
       throw new Error('Filename must match the canonical ID');
     if (kind === 'distributions')
       return { ...data, description: text.parse(match[2].trim()) };
+    if (kind === 'curves')
+      return {
+        ...data,
+        html: marked.parse(text.parse(match[2].trim()), { async: false }),
+      };
 
     // Tokenise headings so fenced code examples cannot accidentally split sections.
     const sections = {};
@@ -180,7 +223,7 @@ export function parseContent(source, file, kind) {
 
 export function loadContent(root = contentRoot) {
   const result = {};
-  for (const kind of ['distributions', 'theorems']) {
+  for (const kind of ['distributions', 'theorems', 'curves']) {
     const directory = resolve(root, kind);
     const entries = readdirSync(directory)
       .filter((file) => file.endsWith('.md'))
@@ -195,6 +238,12 @@ export function loadContent(root = contentRoot) {
     result[kind] = entries;
   }
   result.theorems.sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
+  result.curves.sort((a, b) => a.order - b.order);
+  for (const curve of result.curves)
+    for (const id of curve.related) {
+      if (!result.curves.some((entry) => entry.id === id))
+        throw new Error(`${curve.id}: unknown related curve ${id}`);
+    }
   return result;
 }
 
@@ -203,6 +252,7 @@ export function generateContent() {
   mkdirSync(generatedRoot, { recursive: true });
   const output = {
     ...content,
+    'curve-metadata': content.curves.map(({ html, ...metadata }) => metadata),
     'theorem-summaries': content.theorems.map(
       ({ html, description, history, historyReference, ...summary }) => summary,
     ),
@@ -260,6 +310,6 @@ if (
 ) {
   const content = generateContent();
   console.log(
-    `Validated ${content.distributions.length} distributions and ${content.theorems.length} theorems.`,
+    `Validated ${content.distributions.length} distributions, ${content.theorems.length} theorems, and ${content.curves.length} curves.`,
   );
 }

@@ -17,6 +17,11 @@ const routes = [
   '/color-math',
   '/color-math/converter',
   '/color-math/image',
+  '/curves',
+  '/curves/linear',
+  '/curves/quadratic',
+  '/curves/cubic',
+  '/curves/bezier',
 ];
 test('every route renders real reference HTML without JavaScript', async ({
   browser,
@@ -29,11 +34,8 @@ test('every route renders real reference HTML without JavaScript', async ({
       route,
     ).toBe(200);
     await expect(page.locator('h1'), route).toBeVisible();
-    if (route.startsWith('/trigonometry/')) {
-      await expect(page.locator('.trig-function-nav a')).toHaveCount(6);
-      await expect(
-        page.locator('.trig-function-nav [aria-current=page]'),
-      ).toHaveCount(1);
+    if (/^\/(curves|trigonometry)\//.test(route)) {
+      await expect(page.locator('.trig-function-nav')).toHaveCount(0);
     }
     expect(await page.locator('main').innerText()).not.toMatch(
       /<a href=|aria-current=/,
@@ -143,4 +145,77 @@ test('converter displays the same generic source across all source-target pairs'
       }
     }
   }
+});
+
+test('curve controls, validation and shareable settings work', async ({
+  page,
+}) => {
+  await page.goto('/curves/quadratic?a=2&b=-3&c=1&x=4');
+  await expect(page.locator('#curve-point')).toHaveText('(4, 21)');
+  await expect(page.locator('#curve-derivative')).toHaveText('13');
+  await page.locator('#curve-coefficient-0').fill('0');
+  await expect(page.locator('#curve-note')).toContainText('linear function');
+  await expect(page.locator('#curve-point')).toHaveText('(4, -11)');
+  await page.locator('#curve-input').fill('6');
+  await expect(page.locator('#curve-error')).toContainText('last valid');
+  await expect(page.locator('#curve-point')).toHaveText('(4, -11)');
+  await expect(page.locator('#curve-share')).toBeDisabled();
+  await page.locator('#curve-input').fill('2');
+  await page.reload();
+  await expect(page.locator('#curve-point')).toHaveText('(2, -5)');
+  for (const language of ['js', 'python', 'c']) {
+    await page.locator(`[data-curve-language=${language}]`).click();
+    await expect(page.locator('#curve-code')).toHaveAttribute(
+      'data-code-language',
+      language,
+    );
+    expect(
+      await page.locator('#curve-code .hljs-keyword').count(),
+    ).toBeGreaterThan(0);
+  }
+  await page.locator('#curve-reset').click();
+  await expect(page.locator('#curve-point')).toHaveText('(1, 0)');
+});
+
+test('Bezier points can be edited and dragged on desktop and fit mobile', async ({
+  page,
+}, testInfo) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/curves/bezier');
+  await page.locator('#curve-degree').selectOption('2');
+  await expect(page.locator('[data-point-input]')).toHaveCount(6);
+  await page.getByRole('spinbutton', { name: 'P1 y', exact: true }).fill('2');
+  await expect(page.locator('#curve-point')).toHaveText('(0, 0)');
+  const handle = page.locator('#curve-graph [data-point="1"]');
+  const box = (await handle.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(
+    box.x + box.width / 2 + 35,
+    box.y + box.height / 2 + 20,
+    { steps: 5 },
+  );
+  await page.mouse.up();
+  await expect(
+    page.getByRole('spinbutton', { name: 'P1 x', exact: true }),
+  ).not.toHaveValue('0');
+  const point = await page.locator('#curve-point').textContent();
+  await page.reload();
+  await expect(page.locator('#curve-point')).toHaveText(point!);
+  await page.screenshot({
+    path: testInfo.outputPath('curves-desktop.png'),
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: testInfo.outputPath('curves-mobile.png'),
+    fullPage: true,
+  });
+  expect(errors).toEqual([]);
 });

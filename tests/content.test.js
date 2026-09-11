@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { loadContent, parseContent } from '../scripts/content.mjs';
 import { distributions } from '../src/distributions.ts';
+import { curves } from '../src/curves.ts';
 import { theorems } from '../src/theorems.ts';
 
 const theoremFile = new URL(
@@ -26,6 +27,11 @@ test('every authored document is represented by a page or numerical implementati
     content.theorems.map((t) => t.id),
     theorems.map((t) => t.id),
   );
+  assert.deepEqual(
+    content.curves.map((c) => c.id),
+    curves.map((c) => c.id),
+  );
+  for (const c of content.curves) assert.match(c.html, /class="katex/);
   for (const t of theorems) {
     assert.equal(t.pages[0].url, `/${t.owner}`);
     assert.equal(t.pages.length, t.relatedPages.length + 1);

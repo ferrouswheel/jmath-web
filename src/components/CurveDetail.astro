@@ -1,0 +1,231 @@
+---
+import {
+  initialCurveState,
+  curveResult,
+  curveFormat,
+  curveSlope,
+  curveNote,
+  coefficientNames,
+  type Curve,
+} from '../curves.ts';
+import documents from '../generated/curves.json' with { type: 'json' };
+import { curveGraph } from '../curve-visuals.ts';
+import { curveSnippet, curveLanguages } from '../curve-snippets.ts';
+import { highlightCode } from '../code-highlight.ts';
+interface Props {
+  curve: Curve;
+}
+const { curve } = Astro.props;
+const state = initialCurveState(curve),
+  result = curveResult(curve, state),
+  parametric = curve.id === 'bezier';
+const document = documents.find((d) => d.id === curve.id)!;
+---
+
+<a href="/curves" class="theorem-backlink">
+  ← All curves
+</a>
+<header class="curve-intro curve-detail-intro">
+  <div class="eyebrow">
+    {parametric ? 'CONTROL-POINT CURVES' : 'POLYNOMIAL FUNCTION'}
+  </div>
+  <h1>{curve.name} curves</h1>
+  <p>{curve.description}</p>
+</header>
+<section
+  class="curve-workspace"
+  data-curve={curve.id}
+  aria-label={`${curve.name} explorer`}
+  style={`--curve-color:${curve.color}`}
+>
+  <form class="curve-controls" id="curve-controls">
+    <div class="curve-controls-heading">
+      <h2>{parametric ? 'Control points' : 'Coefficients'}</h2>
+      <button type="button" id="curve-reset" class="quiet-button">
+        Reset
+      </button>
+    </div>
+    {parametric ? (
+      <>
+        <label class="curve-field" for="curve-degree">
+          <span>Curve degree</span>
+          <select id="curve-degree">
+            <option value="2">Quadratic · 3 points</option>
+            <option value="3" selected>
+              Cubic · 4 points
+            </option>
+          </select>
+        </label>
+        <div id="curve-point-controls">
+          {state.points.map((p, i) => (
+            <fieldset class="curve-point-row">
+              <legend>Point P{i}</legend>
+              {p.map((n, axis) => (
+                <label>
+                  <span>{axis === 0 ? 'x' : 'y'}</span>
+                  <input
+                    type="number"
+                    step="any"
+                    min="-5"
+                    max="5"
+                    value={n}
+                    data-point-input={i}
+                    data-axis={axis}
+                    aria-label={`P${i} ${axis === 0 ? 'x' : 'y'}`}
+                  />
+                </label>
+              ))}
+            </fieldset>
+          ))}
+        </div>
+      </>
+    ) : (
+      state.coefficients.map((n, i) => (
+        <div class="curve-coefficient">
+          <label for={`curve-coefficient-${i}`}>
+            Coefficient {coefficientNames[i]}
+          </label>
+          <input
+            id={`curve-coefficient-${i}`}
+            type="number"
+            min="-5"
+            max="5"
+            step="any"
+            value={n}
+            data-coefficient={i}
+          />
+          <input
+            type="range"
+            min="-5"
+            max="5"
+            step="0.05"
+            value={n}
+            data-coefficient-range={i}
+            aria-label={`Coefficient ${coefficientNames[i]} slider`}
+          />
+        </div>
+      ))
+    )}
+    <div class="curve-position">
+      <label for="curve-input">
+        {parametric ? 'Trace the curve · t' : 'Evaluate at x'}
+      </label>
+      <input
+        id="curve-input"
+        type="number"
+        min={parametric ? 0 : -5}
+        max={parametric ? 1 : 5}
+        step="any"
+        value={state.input}
+      />
+      <input
+        id="curve-position"
+        type="range"
+        min={parametric ? 0 : -5}
+        max={parametric ? 1 : 5}
+        step="0.01"
+        value={state.input}
+        aria-label={parametric ? 'Curve parameter t' : 'Evaluation x'}
+      />
+    </div>
+    <p class="error" id="curve-error" role="alert"></p>
+    <button type="button" id="curve-share" class="quiet-button">
+      Copy link to this curve
+    </button>
+    <span id="curve-share-status" role="status"></span>
+  </form>
+  <div class="curve-visual">
+    <div class="curve-legend">
+      <span>Curve</span>
+      <span>Tangent</span>
+      {parametric && <span>Control polygon</span>}
+    </div>
+    <div id="curve-graph" class:list={{ 'curve-draggable': parametric }}>
+      <Fragment set:html={curveGraph(curve, state)} />
+    </div>
+    <div class="curve-results" aria-live="polite" aria-atomic="true">
+      <div>
+        <span>Point (x, y)</span>
+        <output id="curve-point">
+          ({result.point.map(curveFormat).join(', ')})
+        </output>
+      </div>
+      <div>
+        <span>{parametric ? 'Derivative B′(t)' : 'Derivative f′(x)'}</span>
+        <output id="curve-derivative">
+          {parametric
+            ? `(${result.derivative.map(curveFormat).join(', ')})`
+            : curveFormat(result.derivative[1])}
+        </output>
+      </div>
+      <div>
+        <span>Tangent slope</span>
+        <output id="curve-slope">{curveSlope(result.derivative)}</output>
+      </div>
+    </div>
+    <p class="curve-note" id="curve-note">
+      {curveNote(curve, state)}
+    </p>
+    <p class="curve-note">
+      {parametric
+        ? 'Coordinates range from −5 to 5. All control points stay visible.'
+        : 'The graph shows −5 ≤ x ≤ 5; the polynomial continues beyond this window. Coefficients range from −5 to 5.'}
+    </p>
+    <noscript>
+      <p>
+        Enable JavaScript to adjust the graph. The default curve and reference
+        remain available below.
+      </p>
+    </noscript>
+  </div>
+</section>
+<section class="curve-reference theorem-prose" id="curve-reference">
+  <Fragment set:html={document.html} />
+  <a
+    class="theorem-reference"
+    href={curve.reference.url}
+    target="_blank"
+    rel="noreferrer"
+  >
+    {curve.reference.label} ↗
+  </a>
+</section>
+<section class="code-section curve-code" aria-labelledby="curve-code-title">
+  <div class="code-heading">
+    <div>
+      <h2 id="curve-code-title">Implementation</h2>
+      <p>
+        {parametric
+          ? 'De Casteljau interpolation and its derivative.'
+          : 'Direct polynomial evaluation and its derivative.'}{' '}
+        Examples follow the last valid settings.
+      </p>
+    </div>
+    <button type="button" class="quiet-button" id="curve-copy-code">
+      Copy code
+    </button>
+  </div>
+  <div class="code-languages" aria-label="Implementation language">
+    {Object.entries(curveLanguages).map(([key, name]) => (
+      <button
+        type="button"
+        data-curve-language={key}
+        aria-pressed={key === 'js'}
+        class:list={{ selected: key === 'js' }}
+      >
+        {name}
+      </button>
+    ))}
+  </div>
+  <pre
+    class="code-source"
+    tabindex="0"
+    aria-label="Curve implementation"
+  ><code id="curve-code" data-code-language="js" set:html={highlightCode(curveSnippet(curve, 'js', state), 'js')} /></pre>
+  <p class="curve-note">
+    C: save as curve.c and compile with{' '}
+    <code>cc -std=c99 curve.c -lm -o curve</code>. Results are floating-point
+    approximations.
+  </p>
+  <span id="curve-copy-status" role="status"></span>
+</section>

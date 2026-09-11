@@ -2,6 +2,7 @@ import { distributions } from './distributions.ts';
 import { sequences, sequenceUrl } from './sequences.ts';
 import { trigFunctions, trigUrl } from './trigonometry.ts';
 import { distributionUrl } from './routes.ts';
+import { curves, curveUrl } from './curves.ts';
 import { theoremEntries, type TheoremDocument } from './content-data.ts';
 import documents from './generated/theorems.json' with { type: 'json' };
 const theoremDocuments: TheoremDocument[] = documents.map((document) => ({
@@ -17,6 +18,7 @@ export interface TheoremPage extends TheoremDocument {
   pages: { name: string; url: string }[];
 }
 const pages = [
+  ...curves.map((c) => ({ name: c.name, url: curveUrl(c), section: 'Curves' })),
   ...distributions.map((d) => ({
     name: d.name,
     url: distributionUrl(d),

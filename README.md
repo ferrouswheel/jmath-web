@@ -42,7 +42,7 @@ Edit the actual files under `snippets/distributions/`, `snippets/sequences/`, `s
 
 The TypeScript snippet modules only append usage examples using the selected values. They do not assemble algorithm bodies or stringify functions. Image adjustments and the generic seven-space converter display the stable algorithm separately from the changing example.
 
-`npm test` checks every source file, compiles C with warnings treated as errors, and executes all three languages against numerical expectations, boundary cases, sampling statistics, or conversion pairs. A separate check verifies that all 102 source files match the text imported for display. For a new item, add all three source files, register their imports in the section's `src/snippet-files/` module, add catalogue metadata and numerical cases, and update the inventory count in `tests/snippet-files.test.js`.
+`npm test` checks every source file, compiles C with warnings treated as errors, and executes all three languages against numerical expectations, boundary cases, sampling statistics, or conversion pairs. A separate check verifies that all 114 source files match the text imported for display. For a new item, add all three source files, register their imports in the section's `src/snippet-files/` module, add catalogue metadata and numerical cases, and update the inventory count in `tests/snippet-files.test.js`.
 
 The files contain reusable functions. JavaScript and Python example calls, or a C `main`, are appended by the site's copyable usage examples. A C algorithm file on its own can be checked with `cc -std=c99 -Wall -Wextra -Werror -fsyntax-only snippets/color/conversion.c`; link a calling program with `-lm` to run it.
 
@@ -136,3 +136,9 @@ Schemas in `scripts/content.mjs` reject unknown metadata fields, missing section
 Run `npm run build` for full content, link, and TypeScript validation, `npm test` for parser and numerical tests, and `npm run test:e2e` for browser regressions. After rebuilding, `npm run preview` serves the generated site.
 
 Implementation panels use a shared Highlight.js renderer with JavaScript, Python, and C grammars only. Initial HTML is highlighted at build time; language and parameter changes re-highlight the current source. Copy actions read plain text, so highlighting never changes the copied algorithm.
+
+## Curves
+
+`/curves` links to linear, quadratic, cubic, and Bézier explorers. Polynomial pages let you adjust coefficients and evaluate a point and tangent. Bézier supports quadratic (three control points) and cubic (four control points) curves, with draggable points, coordinate inputs, and de Casteljau construction lines. Switching degree resets control points to that degree’s defaults and retains the parameter t. Current settings are stored in the URL and can be copied or reset.
+
+Author descriptions, formulas, history, references, relationships, and explorer defaults in `src/content/curves/*.md`. YAML frontmatter specifies `id`, `name`, `description`, `order`, `color`, `reference`, `input`, and `related`; polynomials also have descending-order `coefficients`, while Bézier has `points` and `quadraticPoints`. Coefficients and control coordinates range from −5 to 5; evaluation x ranges from −5 to 5 and Bézier t from 0 to 1. The build validates these bounds and renders Markdown math with KaTeX. Numerical functions live in `src/curves.ts`; standalone JavaScript, Python, and C implementations live in `snippets/curves/`.

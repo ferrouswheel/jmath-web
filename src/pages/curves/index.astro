@@ -1,0 +1,57 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { curves, curveUrl, initialCurveState } from '../../curves.ts';
+import { curveGraph } from '../../curve-visuals.ts';
+---
+
+<Layout
+  title="Curves"
+  description="Explore linear, quadratic, cubic, and Bézier curves with interactive graphs and implementations."
+  section="/curves"
+  id="curves-page"
+>
+  <header class="curve-intro">
+    <div class="eyebrow">GEOMETRY & FUNCTIONS</div>
+    <h1>Curves</h1>
+    <p>
+      From a straight line to a path shaped by control points. Explore how
+      parameters change a curve, trace its points, and inspect its tangent.
+    </p>
+  </header>
+  <section class="curve-catalogue" aria-label="Curve types">
+    {curves.map((curve) => (
+      <a
+        class="curve-card"
+        href={curveUrl(curve)}
+        style={`--curve-color:${curve.color}`}
+      >
+        <div class="curve-card-top">
+          <span>
+            {curve.id === 'bezier'
+              ? 'Control-point curves'
+              : 'Polynomial function'}
+          </span>
+          <span aria-hidden="true">↗</span>
+        </div>
+        <Fragment
+          set:html={curveGraph(curve, initialCurveState(curve), true)}
+        />
+        <h2>{curve.name}</h2>
+        <p>{curve.description}</p>
+      </a>
+    ))}
+  </section>
+  <section class="curve-reference">
+    <h2>Functions and paths</h2>
+    <p>
+      Linear, quadratic, and cubic polynomials give one y-value for each x. A
+      Bézier curve gives both coordinates from a parameter t, so a path can loop
+      or turn back on itself.
+    </p>
+    <p>
+      Each explorer includes a graph, a point-and-tangent calculator,
+      mathematical reference, and copyable JavaScript, Python, and C
+      implementations.
+    </p>
+  </section>
+</Layout>
