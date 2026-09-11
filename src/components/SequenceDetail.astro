@@ -1,0 +1,192 @@
+---
+import type { Sequence } from '../types.ts';
+interface Props {
+  sequence: Sequence;
+}
+import {
+  sequences,
+  sequenceTerm,
+  sequenceUrl,
+  MAX_SEQUENCE_INDEX,
+} from '../sequences.ts';
+import { sequenceGeometry } from '../sequence-visuals.ts';
+import { sequenceTheorems } from '../sequence-theorems.ts';
+import { renderTheorems } from '../theorem-view.ts';
+import { sequenceLanguages, sequenceSnippet } from '../sequence-snippets.ts';
+const { sequence } = Astro.props;
+const n = sequence.initial,
+  geometry = sequenceGeometry(sequence, n),
+  language = 'js';
+---
+
+<div class="breadcrumb">
+  <a href="/sequences">← Number sequences</a>
+  <span>/</span>
+  <span aria-current="page">{sequence.name}</span>
+</div>
+<section class="intro sequence-intro">
+  <div>
+    <div class="eyebrow">{sequence.category.toUpperCase()}</div>
+    <h1>{sequence.name}</h1>
+    <p>{sequence.description}</p>
+  </div>
+  <a
+    class="quiet-button"
+    href={`https://oeis.org/${sequence.oeis}`}
+    target="_blank"
+    rel="noreferrer"
+  >
+    {sequence.oeis} · OEIS ↗
+  </a>
+</section>
+<section class="sequence-calculator" aria-label="Nth-term calculator">
+  <div class="sequence-n-controls">
+    <h2>Nth-term calculator</h2>
+    <label for="sequence-n">
+      Index n{' '}
+      <span>
+        ({sequence.min}–{MAX_SEQUENCE_INDEX})
+      </span>
+    </label>
+    <div class="sequence-stepper">
+      <button
+        type="button"
+        id="previous-n"
+        class="quiet-button"
+        aria-label="Previous index"
+      >
+        −
+      </button>
+      <input
+        id="sequence-n"
+        type="number"
+        min={`${sequence.min}`}
+        max={`${MAX_SEQUENCE_INDEX}`}
+        step="1"
+        value={`${n}`}
+      />
+      <button
+        type="button"
+        id="next-n"
+        class="quiet-button"
+        aria-label="Next index"
+      >
+        +
+      </button>
+    </div>
+    <label class="small-n-label" for="sequence-slider">
+      Visual range: n = {sequence.min}–{sequence.visualMax}
+    </label>
+    <input
+      id="sequence-slider"
+      type="range"
+      min={`${sequence.min}`}
+      max={`${sequence.visualMax}`}
+      step="1"
+      value={`${Math.min(n, sequence.visualMax)}`}
+    />
+    <p id="sequence-error" class="error" role="alert"></p>
+    <p class="sequence-index-note">
+      {sequence.id === 'primes'
+        ? 'Indexing starts at p₁ = 2.'
+        : sequence.id === 'fibonacci'
+          ? 'Indexing starts at F₀ = 0, F₁ = 1.'
+          : `Indexing starts at a₀ = ${sequenceTerm(sequence, 0)}.`}
+    </p>
+  </div>
+  <div class="sequence-answer">
+    <div class="sequence-answer-heading">
+      <span id="nth-label">a({n}) · exact integer</span>
+      <button type="button" id="copy-term" class="quiet-button">
+        Copy value
+      </button>
+    </div>
+    <output id="nth-value" aria-live="polite">
+      {sequenceTerm(sequence, n).toString()}
+    </output>
+    <div class="sequence-formula">{sequence.formula}</div>
+    <div id="sequence-neighbors"></div>
+    <p id="term-copy-status" role="status"></p>
+  </div>
+</section>
+<section class="sequence-term-section">
+  <h2>Terms near the selected index</h2>
+  <div id="sequence-terms" class="sequence-terms">
+    {Array.from({ length: 12 }, (_, i) => sequence.min + i).map((i) => (
+      <button type="button" data-sequence-index={i} aria-pressed={i === n}>
+        <span>n = {i}</span>
+        <strong>{sequenceTerm(sequence, i).toString()}</strong>
+      </button>
+    ))}
+  </div>
+</section>
+<section class="sequence-interpretation">
+  <div class="sequence-geometry">
+    <div class="sequence-section-heading">
+      <h2>Geometric interpretation</h2>
+      <span id="geometry-index"></span>
+    </div>
+    <div id="sequence-figure">
+      <Fragment set:html={geometry.svg} />
+    </div>
+    <p id="geometry-caption">{geometry.caption}</p>
+    <p id="geometry-limit" class="geometry-limit"></p>
+  </div>
+  <div class="sequence-method">
+    <h2>Calculating the term</h2>
+    <ol id="sequence-steps">
+      {sequence.explain(n).map((step) => (
+        <li>{step}</li>
+      ))}
+    </ol>
+    <h3>Recurrence</h3>
+    <p class="recurrence">{sequence.recurrence}</p>
+    <h3>Identities and relationships</h3>
+    <p>{sequence.insight}</p>
+    <div class="sequence-related">
+      <Fragment
+        set:html={sequence.related
+          .map((id) => {
+            const s = sequences.find((s) => s.id === id)!;
+            return `<a href="${sequenceUrl(s)}">${s.name} →</a>`;
+          })
+          .join('')}
+      />
+    </div>
+  </div>
+</section>
+<Fragment
+  set:html={renderTheorems(
+    sequenceTheorems[sequence.id],
+    sequences,
+    sequenceUrl,
+  )}
+/>
+<section class="sequence-code code-section">
+  <div class="code-heading">
+    <div>
+      <h2>Implementation</h2>
+      <p>Direct arithmetic and algorithms, without external libraries.</p>
+    </div>
+    <button type="button" id="copy-sequence-code" class="quiet-button">
+      Copy code
+    </button>
+  </div>
+  <div class="code-languages" aria-label="Implementation language">
+    <Fragment
+      set:html={Object.entries(sequenceLanguages)
+        .map(
+          ([key, name]) =>
+            `<button type="button" data-sequence-language="${key}" aria-pressed="${key === language}" class="${key === language ? 'selected' : ''}">${name}</button>`,
+        )
+        .join('')}
+    />
+  </div>
+  <p id="sequence-code-note"></p>
+  <pre
+    class="code-source"
+    tabindex="0"
+    aria-label="Sequence implementation"
+  ><code id="sequence-code">{sequenceSnippet(sequence,"js",n)}</code></pre>
+  <p id="sequence-code-status" role="status"></p>
+</section>

@@ -1,0 +1,28 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/ColorHeader.astro';
+import Content from '../../components/ColorImage.astro';
+---
+
+<Layout
+  title="Image adjustments"
+  description="Color-space conversions and image adjustments with explicit transfer functions, working spaces, and clipping."
+  section="/color-math"
+  id="color-math-page"
+  accent="#658a83"
+>
+  <Header page="image" title="Image adjustments" />
+  <div id="color-content">
+    <Content />
+  </div>
+</Layout>
+<script>
+  import { renderColorPage } from '../../client/color.ts';
+  renderColorPage(
+    location.pathname.endsWith('/image')
+      ? 'image'
+      : location.pathname.endsWith('/converter')
+        ? 'converter'
+        : 'hub',
+  );
+</script>

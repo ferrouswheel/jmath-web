@@ -1,0 +1,164 @@
+---
+import type { TrigFunction } from '../types.ts';
+interface Props {
+  item: TrigFunction;
+}
+import { trigFunctions, trigUrl } from '../trigonometry.ts';
+import { trigGraph, unitCircle, trigFormat } from '../trig-visuals.ts';
+import { trigLanguages, trigSnippet } from '../trig-snippets.ts';
+import { renderTheorems } from '../theorem-view.ts';
+import { exactTable } from '../trig-reference.ts';
+const { item } = Astro.props;
+const angle = item.inverse ? item.fn(item.initial) : item.initial;
+---
+
+<div class="breadcrumb">
+  <a href="/trigonometry">← Trigonometry</a>
+  <span>/</span>
+  <span aria-current="page">{item.name}</span>
+</div>
+<section class="intro">
+  <div>
+    <h1>{item.name}</h1>
+    <p>{item.description}</p>
+  </div>
+  <a href="#theorems" class="quiet-button">
+    Related identities ↓
+  </a>
+</section>
+<nav class="trig-function-nav" aria-label="Trigonometric functions">
+  {trigFunctions.map((f) => (
+    <a href={trigUrl(f)} aria-current={f.id === item.id ? 'page' : undefined}>
+      {f.id}
+    </a>
+  ))}
+</nav>
+<section class="trig-calculator">
+  <div class="trig-controls">
+    <h2>Calculator</h2>
+    <label for="trig-unit">
+      {item.inverse ? 'Output angle unit' : 'Angle unit'}
+    </label>
+    <select id="trig-unit">
+      <option value="radians">Radians</option>
+      <option value="degrees">Degrees</option>
+    </select>
+    <label for="trig-input" id="trig-input-label">
+      {item.inverse ? 'Input x (dimensionless)' : 'Angle θ (radians)'}
+    </label>
+    <input type="number" step="any" id="trig-input" value={item.initial} />
+    <label for="trig-slider" id="trig-slider-label"></label>
+    <input id="trig-slider" type="range" step="any" />
+    <div id="trig-presets" class="trig-presets"></div>
+    <p id="trig-error" class="error" role="alert"></p>
+    <span id="trig-result-label"></span>
+    <output id="trig-result" aria-live="polite">
+      {trigFormat(item.fn(item.initial))}
+    </output>
+    <div id="trig-conversion" class="trig-conversion">
+      <span>Radians</span>
+      <span>{trigFormat(angle)}</span>
+      <span>Degrees</span>
+      <span>{trigFormat((angle * 180) / Math.PI)}°</span>
+    </div>
+    <p class="trig-note">
+      <Fragment
+        set:html={
+          item.inverse
+            ? 'Inverse results use the principal range stated below.'
+            : 'The numerical calculator accepts angles within ±10000 radians. Tangent is flagged when |cos θ| < 10⁻¹².'
+        }
+      />{' '}
+      Values are floating-point approximations.
+    </p>
+  </div>
+  <div class="trig-plot">
+    <h2>Function graph</h2>
+    <div id="trig-graph">
+      <Fragment set:html={trigGraph(item, item.initial)} />
+    </div>
+    <p id="trig-graph-caption"></p>
+    <p id="trig-offscreen" role="status"></p>
+  </div>
+</section>
+<section class="trig-details">
+  <div class="trig-circle">
+    <h2>Unit circle</h2>
+    <div id="trig-circle">
+      <Fragment set:html={unitCircle(angle)} />
+    </div>
+    <p>{item.explanation}</p>
+    <p id="trig-angle-note"></p>
+  </div>
+  <div class="trig-properties">
+    <h2>Properties</h2>
+    <dl>
+      <Fragment
+        set:html={Object.entries({
+          Domain: item.domain,
+          Range: item.range,
+          Period: item.period,
+          Symmetry: item.parity,
+          'Derivative (radians)': item.derivative,
+        })
+          .map(([key, val]) => `<dt>${key}</dt><dd>${val}</dd>`)
+          .join('')}
+      />
+    </dl>
+    <p class="trig-definition">{item.formula}</p>
+    <Fragment
+      set:html={
+        item.inverse
+          ? '<p>Inverse notation such as sin⁻¹ means arcsine here, not a reciprocal.</p>'
+          : ''
+      }
+    />
+    <div class="theorem-related">
+      <Fragment
+        set:html={item.related
+          .map((id) => {
+            const f = trigFunctions.find((f) => f.id === id)!;
+            return `<a href="${trigUrl(f)}">${f.name} →</a>`;
+          })
+          .join('')}
+      />
+    </div>
+  </div>
+</section>
+<Fragment set:html={exactTable(item)} />
+<Fragment set:html={renderTheorems(item.theorems, trigFunctions, trigUrl)} />
+<section class="code-section trig-code">
+  <div class="code-heading">
+    <div>
+      <h2>Implementation</h2>
+      <p>
+        Arithmetic series and range reduction; no built-in trigonometric calls.
+      </p>
+    </div>
+    <button id="trig-copy" type="button" class="quiet-button">
+      Copy code
+    </button>
+  </div>
+  <div class="code-languages">
+    <Fragment
+      set:html={Object.entries(trigLanguages)
+        .map(
+          ([key, name]) =>
+            `<button type="button" data-trig-language="${key}">${name}</button>`,
+        )
+        .join('')}
+    />
+  </div>
+  <p id="trig-code-note">
+    All code inputs and angle outputs use radians. Sine and cosine use Taylor
+    series after angle reduction; arctangent uses an alternating series after
+    reciprocal and half-angle reductions. Arcsine and arccosine use arctangent
+    and square roots. These are educational approximations, not correctly
+    rounded library replacements.
+  </p>
+  <pre
+    class="code-source"
+    tabindex="0"
+  ><code id="trig-code">{trigSnippet(item,"js",item.initial)}</code></pre>
+  <p id="trig-copy-status" role="status"></p>
+</section>

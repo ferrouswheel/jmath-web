@@ -1,0 +1,197 @@
+---
+import type { Distribution } from '../types.ts';
+interface Props {
+  d: Distribution;
+}
+import { distributions, defaults, examplePoint } from '../distributions.ts';
+import { distributionUrl } from '../routes.ts';
+import { distributionTheorems } from '../distribution-theorems.ts';
+import { renderTheorems } from '../theorem-view.ts';
+import { languages, algorithms, snippetSource } from '../snippets.ts';
+import { chart, fmt } from '../distribution-visuals.ts';
+const fmtInput = (n: number) => Number(n.toPrecision(6));
+const { d } = Astro.props;
+const values = defaults(d),
+  snippetLanguage = 'js';
+---
+
+<div class="explorer-heading">
+  <div>
+    <span class="eyebrow">DISTRIBUTION EXPLORER</span>
+    <h1>
+      {d.name} distribution{' '}
+      <span class={`type-tag ${d.type.toLowerCase()}`}>{d.type}</span>
+    </h1>
+    <p>
+      {d.alias} <span class="heading-dot">·</span>{' '}
+      <span class="math">{d.notation}</span>
+    </p>
+  </div>
+  <button id="reset" class="quiet-button" aria-label="Reset parameters">
+    ↺ <span>Reset parameters</span>
+  </button>
+</div>
+<div class="explorer-body">
+  <div class="visual-panel">
+    <div class="plot-toolbar">
+      <div class="plot-tabs">
+        <button data-mode="density" class={`selected`} aria-pressed={`true`}>
+          {d.type === 'Discrete' ? 'Probability mass' : 'Probability density'}{' '}
+          <span>{d.type === 'Discrete' ? 'PMF' : 'PDF'}</span>
+        </button>
+        <button data-mode="cdf" class={``} aria-pressed={`false`}>
+          Cumulative <span>CDF</span>
+        </button>
+      </div>
+      <span class="live">
+        <span class="status-dot"></span> Live preview
+      </span>
+    </div>
+    <div id="plot">
+      <Fragment set:html={chart(d, values)} />
+    </div>
+    <div class="plot-caption">
+      <span id="plot-explanation"></span>
+      <span>Value, x</span>
+    </div>
+    <div class="formula" id="formula">
+      {d.formula}
+    </div>
+  </div>
+  <div class="parameters">
+    <div class="section-label">Parameters</div>
+    <Fragment
+      set:html={d.params
+        .map(
+          (p) =>
+            `<div class="parameter"><label for="number-${p.key}"><span class="parameter-symbol">${p.symbol}</span>${p.label}</label><input id="number-${p.key}" data-param="${p.key}" type="number" value="${values[p.key]}" min="${p.min}" max="${p.max}" step="${p.step}"><input type="range" aria-label="${p.label} slider" data-range="${p.key}" value="${values[p.key]}" min="${p.min}" max="${p.max}" step="${p.step}"><div class="range-labels"><span>${p.min}</span><span>${p.max}</span></div></div>`,
+        )
+        .join('')}
+    />
+    <p id="parameter-error" class="error" role="alert"></p>
+    <div class="parameter-tip">
+      <span>ⓘ</span> Adjust the parameters to see how the distribution changes.
+    </div>
+  </div>
+</div>
+<div class="detail-grid">
+  <section class="properties">
+    <h3>Properties</h3>
+    <div id="stats" class="stats">
+      {Object.entries(d.stats(values)).map(([key, value]) => (
+        <div class="stat">
+          <span>{key}</span>
+          <strong>{fmt(value)}</strong>
+        </div>
+      ))}
+    </div>
+    <div class="use-case">
+      <h4>Applications</h4>
+      <p>{d.use}</p>
+      <a
+        href={`${d.sourceUrl || `https://www.itl.nist.gov/div898/handbook/eda/section3/eda366${d.source}.htm`}`}
+        target="_blank"
+        rel="noreferrer"
+      >
+        Explore the {d.sourceUrl ? 'distribution' : 'NIST'} reference ↗
+      </a>
+    </div>
+  </section>
+  <section class="generator">
+    <h3>Sample generator</h3>
+    <p>Generate values from your current distribution.</p>
+    <form id="generate-form">
+      <div class="generator-inputs">
+        <label>
+          Sample size
+          <input
+            id="sample-size"
+            type="number"
+            min="1"
+            max="10000"
+            step="1"
+            value="100"
+            required
+          />
+        </label>
+        <label>
+          Seed <span>optional</span>
+          <input
+            id="seed"
+            type="text"
+            placeholder="Optional seed"
+            maxlength="100"
+          />
+        </label>
+      </div>
+      <div class="generate-actions">
+        <button class="primary" type="submit">
+          ⚄ &nbsp; Generate samples
+        </button>
+        <button id="download" type="button" class="quiet-button" disabled>
+          ↓ CSV
+        </button>
+      </div>
+    </form>
+    <p id="sample-status" class="sample-status" aria-live="polite">
+      A fixed seed reproduces the sample sequence.
+    </p>
+    <pre id="samples" class="sample-output">No samples generated.</pre>
+    <div class="calculator">
+      <label for="prob-x">Cumulative probability · P(X ≤ x)</label>
+      <div>
+        <input
+          id="prob-x"
+          type="number"
+          step="any"
+          value={`${fmtInput(examplePoint(d, values))}`}
+          aria-label="Value x for cumulative probability"
+        />
+        <output id="prob-result">
+          {fmt(d.cdf(examplePoint(d, values), values))}
+        </output>
+      </div>
+    </div>
+  </section>
+</div>
+<Fragment
+  set:html={renderTheorems(
+    distributionTheorems[d.id],
+    distributions,
+    distributionUrl,
+  )}
+/>
+<section class="code-section" aria-labelledby="code-title">
+  <div class="code-heading">
+    <div>
+      <h3 id="code-title">Implementation</h3>
+      <p>
+        PDF/PMF and sample generation, implemented from scratch.
+        Standard-library math and uniform random numbers only.
+      </p>
+    </div>
+    <button id="copy-code" class="quiet-button">
+      Copy code
+    </button>
+  </div>
+  <div class="code-languages" aria-label="Code language">
+    <Fragment
+      set:html={Object.entries(languages)
+        .map(
+          ([key, name]) =>
+            `<button data-language="${key}" aria-pressed="${key === snippetLanguage}" class="${key === snippetLanguage ? 'selected' : ''}">${name}</button>`,
+        )
+        .join('')}
+    />
+  </div>
+  <p id="code-algorithm">{algorithms[d.id]}</p>
+  <pre
+    class="code-source"
+    tabindex="0"
+    aria-label="Implementation code"
+  ><code id="snippet-code">{snippetSource(d,"js",values)}</code></pre>
+  <div class="code-footer">
+    <span id="code-note"></span>
+    <span id="copy-status" role="status"></span>
+  </div>
+</section>

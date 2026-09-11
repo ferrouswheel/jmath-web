@@ -1,0 +1,35 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Detail from '../../components/Distribution.astro';
+import { distributions } from '../../distributions.ts';
+export function getStaticPaths() {
+  return distributions.map((d) => ({
+    params: { slug: d.id.replaceAll('_', '-') },
+    props: { d },
+  }));
+}
+const { d } = Astro.props;
+---
+
+<Layout
+  title={d.name + ' distribution'}
+  description={d.description}
+  id="distribution-page"
+>
+  <div class="breadcrumb">
+    <a href="/">← All distributions</a>
+    <span>/</span>
+    <span aria-current="page">{d.name}</span>
+  </div>
+  <section
+    id="explorer"
+    class="explorer"
+    aria-label="Distribution explorer"
+    style={`--accent:${d.color}`}
+  >
+    <Detail d={d} />
+  </section>
+</Layout>
+<script>
+  import '../../client/distributions.ts';
+</script>

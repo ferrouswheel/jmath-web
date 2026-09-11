@@ -1,0 +1,86 @@
+---
+import '../style.css';
+interface Props {
+  title: string;
+  description: string;
+  id?: string;
+  section?: string;
+  accent?: string;
+}
+const {
+  title,
+  description,
+  id = 'catalogue',
+  section = '/',
+  accent,
+} = Astro.props;
+const navigation = [
+  ['/', '◫', 'Distributions', 17],
+  ['/random-tools', '⚄', 'Dice & coins', 2],
+  ['/sequences', '▦', 'Sequences', 8],
+  ['/trigonometry', '∿', 'Trigonometry', 6],
+  ['/color-math', '◐', 'Color math', 2],
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f8fa" />
+    <meta name="description" content={description} />
+    <title>{title} · jmath</title>
+  </head>
+  <body>
+    <header class="header">
+      <a class="brand" href="/" aria-label="jmath home">
+        <span class="logo">
+          j<span>∿</span>
+        </span>
+        jmath<span class="brand-dot">.</span>
+      </a>
+      <a
+        class="github"
+        href="https://github.com/ferrouswheel/jmath-web"
+        target="_blank"
+        rel="noreferrer"
+      >
+        View on GitHub ↗
+      </a>
+    </header>
+    <nav class="mobile-tool-nav" aria-label="Tools">
+      {navigation.map(([href, , label]) => (
+        <a href={String(href)} class:list={{ active: section === href }}>
+          {label}
+        </a>
+      ))}
+    </nav>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="nav-label">TOOLS</div>
+        {navigation.map(([href, icon, label, count]) => (
+          <a
+            href={String(href)}
+            class:list={['nav-item', { active: section === href }]}
+          >
+            <span>{icon}</span> {label} <span class="count">{count}</span>
+          </a>
+        ))}
+      </aside>
+      <main id={id} style={accent ? `--accent:${accent}` : undefined}>
+        <slot />
+        <footer>
+          <strong>jmath.</strong>
+          <a
+            href="https://github.com/ferrouswheel/jmath-web"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Source code ↗
+          </a>
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>

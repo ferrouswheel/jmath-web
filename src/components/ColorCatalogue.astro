@@ -1,0 +1,44 @@
+---
+import {} from '../color-math.ts';
+import { sourceLinks } from '../color-reference.ts';
+---
+
+<div class="color-hub">
+  <a class="color-hub-card" href="/color-math/converter">
+    <div class="color-spectrum" aria-hidden="true"></div>
+    <h2>Color-space converter</h2>
+    <p>
+      sRGB, linear sRGB, HSL, HSV, CIE XYZ, CIELAB, and Oklab. See the same
+      color in each coordinate system.
+    </p>
+    <span>Convert colors →</span>
+  </a>
+  <a class="color-hub-card" href="/color-math/image">
+    <canvas
+      id="color-hub-example"
+      aria-label="Built-in still-life example with colored objects and neutral swatches"
+    ></canvas>
+    <h2>Image adjustments</h2>
+    <p>
+      Compare linear-light and encoded-sRGB operations on a built-in scene, a
+      test chart, or your own image.
+    </p>
+    <span>Adjust an image →</span>
+  </a>
+</div>
+<section class="color-reference">
+  <h2>Encoded values and light</h2>
+  <p>
+    An sRGB channel value of 0.5 decodes to approximately 0.214 in linear light.
+    Multiplying encoded values and multiplying light values therefore produce
+    different results.
+  </p>
+  <p>
+    The image tool makes this distinction explicit and shows the operation
+    order. Conversion results retain values outside the sRGB gamut; display
+    previews clip them.
+  </p>
+  <p>
+    <Fragment set:html={sourceLinks} />
+  </p>
+</section>

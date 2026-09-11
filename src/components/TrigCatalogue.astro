@@ -1,0 +1,41 @@
+---
+import { trigFunctions, trigUrl } from '../trigonometry.ts';
+import { trigGraph } from '../trig-visuals.ts';
+---
+
+<div class="breadcrumb">
+  Toolkit <span>/</span> Trigonometry
+</div>
+<section class="intro">
+  <div>
+    <h1>Trigonometric functions</h1>
+    <p>
+      Sine, cosine, tangent, and their principal inverses. Explore angles,
+      coordinates, graphs, and identities.
+    </p>
+  </div>
+</section>
+<section
+  class="trig-catalogue sequence-cards"
+  aria-label="Trigonometric functions"
+>
+  <Fragment
+    set:html={trigFunctions
+      .map(
+        (f) =>
+          `<a class="sequence-card" href="${trigUrl(f)}"><div class="sequence-card-top"><span>${f.inverse ? 'Inverse function' : 'Trigonometric function'}</span><span>↗</span></div>${trigGraph(f, null, 'radians', true)}<h2>${f.name}</h2><div class="sequence-preview">${f.notation}</div><p>${f.description}</p><div class="sequence-card-formula">Range: ${f.range}</div></a>`,
+      )
+      .join('')}
+  />
+</section>
+<section class="trig-reference">
+  <h2>Angles and inverse functions</h2>
+  <p>
+    A full turn is 2π radians or 360°. Convert degrees to radians by multiplying
+    by π/180.
+  </p>
+  <p>
+    Arcsin, arccos, and arctan return one principal angle. They are inverse
+    functions, not reciprocals: arcsin(x) is different from 1/sin(x).
+  </p>
+</section>

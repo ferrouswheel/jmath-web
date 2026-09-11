@@ -1,0 +1,45 @@
+---
+import {} from '../color-math.ts';
+
+interface Props {
+  page: 'hub' | 'converter' | 'image';
+  title: string;
+}
+const { page, title } = Astro.props;
+---
+
+<div class="breadcrumb">
+  <Fragment
+    set:html={
+      page === 'hub' ? 'Toolkit' : '<a href="/color-math">← Color math</a>'
+    }
+  />
+  <span>/</span>
+  {title}
+</div>
+<section class="intro">
+  <div>
+    <h1>{title}</h1>
+    <p>
+      {page === 'hub'
+        ? 'Color representations, numerical conversions, and image processing.'
+        : page === 'converter'
+          ? 'Convert an opaque color between seven spaces. White points and channel scales are explicit.'
+          : 'Apply gain, exposure, contrast, brightness, and a power curve to image pixels.'}
+    </p>
+  </div>
+</section>
+<nav class="color-nav" aria-label="Color tools">
+  <a
+    href="/color-math/converter"
+    aria-current={page === 'converter' ? 'page' : undefined}
+  >
+    Color-space converter
+  </a>
+  <a
+    href="/color-math/image"
+    aria-current={page === 'image' ? 'page' : undefined}
+  >
+    Image adjustments
+  </a>
+</nav>

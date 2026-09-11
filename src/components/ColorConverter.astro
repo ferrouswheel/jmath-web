@@ -1,0 +1,143 @@
+---
+import ColorCode from './ColorCode.astro';
+import { colorSpaces, toLinear, fromLinear } from '../color-math.ts';
+import { sourceLinks } from '../color-reference.ts';
+const values = [59, 130, 246],
+  linear = toLinear('srgb', values);
+const fmt = (n: number) =>
+  Math.abs(n) < 1e-7 ? '0' : Number(n.toPrecision(7)).toString();
+const options = colorSpaces
+  .map((s) => `<option value="${s.id}">${s.name}</option>`)
+  .join('');
+---
+
+<section class="color-converter">
+  <div class="color-input">
+    <h2>Source color</h2>
+    <label for="color-source">Color space</label>
+    <select id="color-source">
+      <Fragment set:html={options} />
+    </select>
+    <div id="color-channels">
+      {colorSpaces[0].channels.map((label, i) => (
+        <label for={`color-channel-${i}`}>
+          {label}
+          <input
+            id={`color-channel-${i}`}
+            data-color-channel={i}
+            type="number"
+            step="any"
+            min="0"
+            max="255"
+            value={values[i]}
+          />
+        </label>
+      ))}
+    </div>
+    <div class="color-hex-row">
+      <label for="color-picker">
+        sRGB picker
+        <input type="color" id="color-picker" value="#3b82f6" />
+      </label>
+      <label for="color-hex">
+        sRGB hex
+        <input
+          id="color-hex"
+          type="text"
+          value="#3b82f6"
+          maxlength="7"
+          spellcheck="false"
+        />
+      </label>
+      <button type="button" id="color-hex-apply" class="quiet-button">
+        Apply hex
+      </button>
+    </div>
+    <p id="color-source-note" class="color-small" role="status"></p>
+    <p id="color-input-error" class="error" role="alert"></p>
+    <p class="color-small">
+      Hue is in degrees. HSL and HSV saturation and lightness/value use
+      percentages. Lab uses D50; XYZ and Oklab use D65.
+    </p>
+  </div>
+  <div class="color-output">
+    <div
+      id="color-swatch"
+      style="background:#3b82f6"
+      role="img"
+      aria-label="Converted color preview"
+    ></div>
+    <p id="color-preview-hex">#3b82f6</p>
+    <label for="color-target">Convert to</label>
+    <select id="color-target">
+      {colorSpaces.map((space) => (
+        <option value={space.id} selected={space.id === 'lab'}>
+          {space.name}
+        </option>
+      ))}
+    </select>
+    <output id="color-converted" aria-live="polite">
+      {fromLinear('lab', linear)!.map(fmt).join(', ')}
+    </output>
+    <div class="color-actions">
+      <button type="button" id="color-swap" class="quiet-button">
+        Use result as input ⇄
+      </button>
+      <button type="button" id="color-copy" class="quiet-button">
+        Copy values
+      </button>
+    </div>
+    <p id="color-copy-status" role="status"></p>
+    <p id="color-gamut" role="status"></p>
+  </div>
+</section>
+<section class="color-reference">
+  <h2>All representations</h2>
+  <div class="color-table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Space</th>
+          <th scope="col">Coordinates</th>
+        </tr>
+      </thead>
+      <tbody id="color-all-values">
+        {colorSpaces.map((space) => (
+          <tr>
+            <th scope="row">{space.name}</th>
+            <td>{fromLinear(space.id, linear)!.map(fmt).join(', ')}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</section>
+<section class="color-space-grid">
+  <Fragment
+    set:html={colorSpaces
+      .map(
+        (s) =>
+          `<article><h2>${s.name}</h2><p>${s.description}</p><p class="color-formula">${s.formula}</p></article>`,
+      )
+      .join('')}
+  />
+</section>
+<section class="color-reference">
+  <h2>Conversion method</h2>
+  <p>
+    Conversions pass through linear sRGB. XYZ uses matrix multiplication; Lab
+    adds white-point adaptation and its piecewise cube-root transform. Oklab
+    uses two matrices around a cube-root step. HSL and HSV operate on encoded
+    sRGB.
+  </p>
+  <p>
+    Out-of-gamut numeric RGB values are preserved. The swatch and hex preview
+    use channel clipping, not perceptual gamut mapping. HSL/HSV output is
+    omitted for such colors because this tool uses their bounded sRGB
+    convention.
+  </p>
+  <p>
+    <Fragment set:html={sourceLinks} />
+  </p>
+</section>
+<ColorCode conversion={true} />

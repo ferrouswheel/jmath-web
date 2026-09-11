@@ -1,0 +1,198 @@
+---
+import { empiricalChart } from '../experiment-visuals.ts';
+import {
+  MAX_TRIALS,
+  experimentDefaults,
+  createExperiment,
+} from '../experiments.ts';
+const titles = { dice: 'Dice roller', coins: 'Coin flipper' };
+interface Props {
+  kind: 'dice' | 'coins';
+}
+const { kind } = Astro.props;
+const initial = experimentDefaults(kind),
+  experiment = createExperiment(kind, initial),
+  theory = experiment.theory;
+---
+
+<div class="breadcrumb">
+  <a href="/random-tools">← Dice & coins</a>
+  <span>/</span>
+  <span aria-current="page">{titles[kind]}</span>
+</div>
+<section class="intro tool-intro">
+  <div>
+    <h1>{titles[kind]}</h1>
+    <p>
+      {kind === 'dice'
+        ? 'Roll fair dice and explore the distribution of their total.'
+        : 'Flip coins and explore the distribution of the number of heads.'}
+    </p>
+  </div>
+</section>
+<section class="lab-top">
+  <form id="experiment-settings" class="lab-settings" novalidate>
+    <h2>Experiment settings</h2>
+    <label for="trial-count">
+      {kind === 'dice' ? 'Dice' : 'Coins'} per trial{' '}
+      <input
+        id="trial-count"
+        type="number"
+        min="1"
+        max={`${kind === 'dice' ? 6 : 100}`}
+        step="1"
+        value={`${initial.count}`}
+        required
+      />
+    </label>
+    <Fragment
+      set:html={
+        kind === 'dice'
+          ? '<label for="die-sides">Sides per die<input id="die-sides" type="number" min="2" max="20" step="1" value="6" required></label><div class="die-presets" aria-label="Common dice">' +
+            [4, 6, 8, 10, 12, 20]
+              .map(
+                (n) => `<button type="button" data-sides="${n}">d${n}</button>`,
+              )
+              .join('') +
+            '</div>'
+          : '<label for="heads-p">Heads probability <input id="heads-p" type="number" min="0" max="1" step="0.01" value="0.5" required></label><input id="heads-slider" type="range" min="0" max="1" step=".01" value=".5" aria-label="Heads probability slider"><div class="coin-odds" id="coin-odds"></div>'
+      }
+    />
+    <label for="experiment-seed">
+      Seed <span class="optional">optional</span>
+      <input
+        id="experiment-seed"
+        type="text"
+        maxlength="100"
+        placeholder="A repeatable experiment"
+      />
+    </label>
+    <p class="lab-hint">
+      Changing settings starts a new experiment. A seed repeats the sequence
+      after reset.
+    </p>
+    <p id="settings-error" class="error" role="alert"></p>
+  </form>
+  <div class="roll-stage">
+    <div class="stage-label">ONE TRIAL</div>
+    <div id="trial-definition"></div>
+    <div id="trial-items" class="trial-items"></div>
+    <div id="trial-result" aria-live="polite">
+      No trial generated.
+    </div>
+    <button type="button" id="single-trial" class="primary">
+      {kind === 'dice' ? 'Roll dice' : 'Flip coin'}
+    </button>
+    <p class="lab-hint">
+      Each result adds one trial to your empirical distribution.
+    </p>
+  </div>
+</section>
+<section class="lab-simulation">
+  <div class="lab-section-heading">
+    <div>
+      <h2>Empirical distribution</h2>
+    </div>
+    <button type="button" id="reset-experiment" class="quiet-button">
+      ↺ Reset experiment
+    </button>
+  </div>
+  <form id="simulation-form">
+    <label for="simulation-n">
+      Additional trials, N
+      <input
+        id="simulation-n"
+        type="number"
+        min="1"
+        max={`${MAX_TRIALS}`}
+        step="1"
+        value="1000"
+        required
+      />
+    </label>
+    <div class="trial-presets" aria-label="Simulation sizes">
+      <Fragment
+        set:html={[100, 1000, 10000]
+          .map(
+            (n) =>
+              `<button type="button" data-trials="${n}">${n.toLocaleString()}</button>`,
+          )
+          .join('')}
+      />
+    </div>
+    <button type="submit" class="primary" id="simulate">
+      Add N trials
+    </button>
+    <button type="button" id="cancel-simulation" class="quiet-button" hidden>
+      Stop
+    </button>
+  </form>
+  <div class="simulation-status-row">
+    <p id="simulation-status" role="status">
+      No trials recorded.
+    </p>
+    <button type="button" id="export-experiment" class="quiet-button" disabled>
+      ↓ Frequency CSV
+    </button>
+  </div>
+  <p id="simulation-error" class="error" role="alert"></p>
+  <div id="experiment-stats" class="experiment-stats"></div>
+  <div class="empirical-legend">
+    <span>
+      <i class="observed-key"></i>Observed proportion
+    </span>
+    <span>
+      <i class="expected-key"></i>Theoretical probability
+    </span>
+  </div>
+  <div class="empirical-scroll">
+    <div id="empirical-chart">
+      <Fragment
+        set:html={empiricalChart(
+          theory,
+          experiment.frequencies,
+          0,
+          String,
+          kind === 'dice' ? 'Sum of dice' : 'Number of heads',
+        )}
+      />
+    </div>
+  </div>
+  <p class="lab-hint">
+    Bar height = observed count ÷ completed trials. Gold markers show the exact
+    probability of each outcome.
+  </p>
+  <div class="theory-note">
+    <span class="theory-icon" aria-hidden="true">
+      ∿
+    </span>
+    <div>
+      <h3 id="theory-name">{theory.name}</h3>
+      <p id="theory-relation">{theory.relation}</p>
+      <a id="theory-link"></a>
+    </div>
+  </div>
+  <details class="frequency-details">
+    <summary>View frequency table</summary>
+    <div class="frequency-scroll">
+      <table>
+        <caption>Observed and theoretical outcome frequencies</caption>
+        <thead>
+          <tr>
+            <th scope="col">Outcome</th>
+            <th scope="col">Observed count</th>
+            <th scope="col">Observed %</th>
+            <th scope="col">Expected count</th>
+            <th scope="col">Theoretical %</th>
+          </tr>
+        </thead>
+        <tbody id="frequency-rows"></tbody>
+      </table>
+    </div>
+  </details>
+  <p class="lab-footnote">
+    Up to {MAX_TRIALS.toLocaleString()} trials per experiment. Variance uses
+    divisor N. All trials run locally using the browser RNG, or a seeded
+    pseudorandom generator when a seed is supplied.
+  </p>
+</section>

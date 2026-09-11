@@ -1,0 +1,62 @@
+---
+import { sequences, sequenceTerm, sequenceUrl } from '../sequences.ts';
+import { sequenceGeometry } from '../sequence-visuals.ts';
+---
+
+<div class="breadcrumb">
+  Toolkit <span>/</span> Number sequences
+</div>
+<section class="intro">
+  <div>
+    <h1>Number sequences</h1>
+    <p>
+      Exact terms, defining formulas, geometric interpretations, related
+      theorems, and implementations.
+    </p>
+  </div>
+</section>
+<div class="sequence-toolbar">
+  <span>{sequences.length} sequences</span>
+  <label class="search">
+    <input
+      id="sequence-search"
+      type="search"
+      placeholder="Search sequences"
+      aria-label="Search sequences"
+    />
+  </label>
+</div>
+<section
+  id="sequence-cards"
+  class="sequence-cards"
+  aria-label="Number sequences"
+>
+  {sequences.map((s) => (
+    <a
+      class="sequence-card"
+      href={sequenceUrl(s)}
+      style={`--accent:${s.color}`}
+    >
+      <div class="sequence-card-top">
+        <span>{s.category}</span>
+        <span>↗</span>
+      </div>
+      <Fragment
+        set:html={sequenceGeometry(s, Math.min(s.initial, 5), true).svg}
+      />
+      <h2>{s.name}</h2>
+      <div class="sequence-preview">
+        {Array.from({ length: 7 }, (_, i) =>
+          String(sequenceTerm(s, s.min + i)),
+        ).join(', ')}
+        , …
+      </div>
+      <p>{s.description}</p>
+      <div class="sequence-card-formula">{s.formula}</div>
+    </a>
+  ))}
+</section>
+<p id="sequence-empty" class="empty-state" hidden>
+  No matching sequences.
+</p>
+<p id="sequence-search-status" class="catalogue-status" role="status"></p>

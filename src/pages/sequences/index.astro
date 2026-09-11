@@ -1,0 +1,17 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Catalogue from '../../components/SequenceCatalogue.astro';
+---
+
+<Layout
+  title="Number sequences"
+  description="Mathematical properties, graphs, and implementations."
+  section="/sequences"
+  id="sequences-page"
+>
+  <Catalogue />
+</Layout>
+<script>
+  import { renderSequencePage } from '../../client/sequences.ts';
+  renderSequencePage(null);
+</script>

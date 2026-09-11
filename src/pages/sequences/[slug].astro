@@ -1,0 +1,31 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Detail from '../../components/SequenceDetail.astro';
+import { sequences } from '../../sequences.ts';
+export function getStaticPaths() {
+  return sequences.map((sequence) => ({
+    params: { slug: sequence.id },
+    props: { sequence },
+  }));
+}
+const { sequence } = Astro.props;
+---
+
+<Layout
+  title={sequence.name}
+  description={sequence.description}
+  section="/sequences"
+  id="sequences-page"
+  accent={sequence.color}
+>
+  <Detail sequence={sequence} />
+</Layout>
+<script>
+  import { renderSequencePage } from '../../client/sequences.ts';
+  import { sequences } from '../../sequences.ts';
+  renderSequencePage(
+    sequences.find(
+      (i) => i.id === location.pathname.split('/').filter(Boolean).at(-1),
+    )!,
+  );
+</script>

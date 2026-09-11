@@ -1,0 +1,24 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Detail from '../../components/RandomDetail.astro';
+export function getStaticPaths() {
+  return (['dice', 'coins'] as const).map((kind) => ({
+    params: { kind },
+    props: { kind },
+  }));
+}
+const { kind } = Astro.props;
+---
+
+<Layout
+  title={kind === 'dice' ? 'Dice roller' : 'Coin flipper'}
+  description="Compare observed frequencies with exact probabilities."
+  section="/random-tools"
+  id="random-page"
+>
+  <Detail kind={kind} />
+</Layout>
+<script>
+  import { renderRandomTools } from '../../client/random.ts';
+  renderRandomTools(location.pathname.includes('dice') ? 'dice' : 'coins');
+</script>

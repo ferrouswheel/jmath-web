@@ -1,0 +1,121 @@
+---
+import ColorCode from './ColorCode.astro';
+import { adjustmentDefaults, adjustmentControls } from '../color-math.ts';
+import { sourceLinks } from '../color-reference.ts';
+const settings = adjustmentDefaults;
+---
+
+<section class="color-image-toolbar">
+  <label class="quiet-button color-upload">
+    Open image
+    <input
+      id="color-file"
+      type="file"
+      accept="image/png,image/jpeg,image/webp"
+    />
+  </label>
+  <button type="button" class="quiet-button" id="color-scene">
+    Example scene
+  </button>
+  <button type="button" class="quiet-button" id="color-chart">
+    Test chart
+  </button>
+  <button type="button" class="quiet-button" id="color-reset">
+    Reset adjustments
+  </button>
+  <button type="button" class="primary" id="color-download">
+    Download PNG
+  </button>
+</section>
+<p id="color-image-info" class="color-small" role="status"></p>
+<p id="color-image-error" class="error" role="alert"></p>
+<section class="color-image-layout">
+  <div class="color-image-controls">
+    <h2>Adjustments</h2>
+    <label for="color-working">Working space</label>
+    <select id="color-working">
+      <option value="linear">Linear light · sRGB primaries</option>
+      <option value="srgb">Encoded sRGB</option>
+    </select>
+    <Fragment
+      set:html={adjustmentControls
+        .map(
+          (p) =>
+            `<div class="color-adjustment"><label for="adjust-${p.id}">${p.name}</label><input id="adjust-${p.id}" data-adjust-number="${p.id}" type="number" min="${p.min}" max="${p.max}" step="${p.step}" value="${settings[p.id]}"><input aria-label="${p.name} slider" data-adjust-range="${p.id}" type="range" min="${p.min}" max="${p.max}" step="${p.step}" value="${settings[p.id]}"></div>`,
+        )
+        .join('')}
+    />
+    <p id="color-adjust-error" class="error" role="alert"></p>
+    <div class="color-image-stats">
+      <span>Pixels clipped low</span>
+      <output id="color-clip-low">0%</output>
+      <span>Pixels clipped high</span>
+      <output id="color-clip-high">0%</output>
+    </div>
+    <p class="color-small">
+      Counts include visible pixels with at least one RGB channel outside 0–1
+      before the power curve. Existing black or white pixels are not counted
+      unless pushed beyond the range.
+    </p>
+  </div>
+  <div class="color-image-preview">
+    <div class="color-canvas-pair">
+      <figure>
+        <figcaption>Original</figcaption>
+        <canvas id="color-original" aria-label="Original image"></canvas>
+      </figure>
+      <figure>
+        <figcaption>Adjusted</figcaption>
+        <canvas
+          id="color-adjusted"
+          aria-label="Image with current adjustments"
+        ></canvas>
+      </figure>
+    </div>
+    <div class="color-image-charts">
+      <div>
+        <h3>Channel response</h3>
+        <div id="color-response"></div>
+        <p class="color-small">
+          Encoded sRGB input → encoded output. Dashed line: unchanged.
+        </p>
+      </div>
+      <div>
+        <h3>Adjusted luminance histogram</h3>
+        <div id="color-histogram"></div>
+        <p class="color-small">
+          Linear relative luminance from 0 to 1. Each nontransparent pixel
+          counts once.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="color-reference">
+  <h2>Operation order</h2>
+  <p id="color-operation"></p>
+  <p class="color-formula">
+    v₁ = v × gain × 2^exposure
+    <br />
+    v₂ = pivot + contrast × (v₁ − pivot) + brightness
+    <br />
+    v₃ = clamp(v₂, 0, 1)^(1/gamma)
+  </p>
+  <p>
+    Gain multiplies values; exposure expresses a multiplier in stops. Brightness
+    adds an offset. Contrast scales distance from the pivot. Gamma is a separate
+    power curve here, not the sRGB transfer function. The pivot is 0.18 in
+    linear light and 0.5 in encoded sRGB.
+  </p>
+  <p>
+    Edits always start from the original pixels. Alpha is preserved. Images stay
+    in your browser; the working image is resized to a maximum of 1200 pixels on
+    its longest side, and the PNG export uses those working dimensions. Browser
+    decoding handles embedded profiles before drawing into an sRGB canvas;
+    metadata is not preserved.
+  </p>
+  <p>
+    <Fragment set:html={sourceLinks} />
+  </p>
+</section>
+<ColorCode conversion={false} />

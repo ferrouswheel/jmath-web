@@ -1,0 +1,111 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { distributions, defaults } from '../distributions.ts';
+import { distributionUrl } from '../routes.ts';
+import { chart } from '../distribution-visuals.ts';
+---
+
+<Layout
+  title="Probability distributions"
+  description="Properties, probability functions, and sampling algorithms for continuous and discrete distributions."
+>
+  <div class="breadcrumb">
+    Toolkit <span>/</span> Probability distributions
+  </div>
+  <section class="intro" id="catalogue-intro">
+    <div>
+      <h1>Probability distributions</h1>
+      <p>
+        Properties, probability functions, and sampling algorithms for
+        continuous and discrete distributions.
+      </p>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <svg viewBox="0 0 210 110">
+        <defs>
+          <linearGradient id="hero-fill" x2="0" y2="1">
+            <stop stop-color="#9990ed" stop-opacity=".35" />
+            <stop offset="1" stop-color="#9990ed" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+        <path d="M5 95H205M105 8V103" stroke="#d9d7e4" stroke-dasharray="3 4" />
+        <path
+          d="M5 95C50 95 58 92 75 53S95 15 105 15S121 21 135 53S162 95 205 95V100H5Z"
+          fill="url(#hero-fill)"
+        />
+        <path
+          d="M5 95C50 95 58 92 75 53S95 15 105 15S121 21 135 53S162 95 205 95"
+          fill="none"
+          stroke="#8379d8"
+          stroke-width="2"
+        />
+        <text
+          x="156"
+          y="22"
+          fill="#a19ab8"
+          font-size="15"
+          font-family="serif"
+          font-style="italic"
+        >
+          ∫ f(x) dx = 1
+        </text>
+      </svg>
+    </div>
+  </section>
+  <section id="catalogue-list" aria-label="Distribution catalogue">
+    <div class="catalogue-toolbar">
+      <div class="filters" aria-label="Filter by type">
+        <button class="selected" data-filter="All" aria-pressed="true">
+          All distributions <span>17</span>
+        </button>
+        <button data-filter="Continuous" aria-pressed="false">
+          Continuous <span>11</span>
+        </button>
+        <button data-filter="Discrete" aria-pressed="false">
+          Discrete <span>6</span>
+        </button>
+      </div>
+      <label class="search">
+        <span aria-hidden="true">⌕</span>
+        <input
+          id="search"
+          type="search"
+          placeholder="Find a distribution…"
+          aria-label="Find a distribution"
+        />
+        <kbd>/</kbd>
+      </label>
+    </div>
+    <div id="cards" class="cards">
+      {distributions.map((d) => (
+        <a
+          class="distribution-card"
+          href={distributionUrl(d)}
+          data-id={d.id}
+          style={`--accent:${d.color}`}
+        >
+          <div class="card-top">
+            <span class={`type-tag ${d.type.toLowerCase()}`}>{d.type}</span>
+            <span class="card-arrow">↗</span>
+          </div>
+          <Fragment set:html={chart(d, defaults(d), false, true)} />
+          <div class="card-name">{d.name}</div>
+          <div class="notation">{d.notation}</div>
+          <p>{d.description}</p>
+          <div class="card-tags">
+            {d.tags.map((t) => (
+              <span>{t}</span>
+            ))}
+          </div>
+        </a>
+      ))}
+    </div>
+    <p id="catalogue-empty" class="empty-state" hidden>
+      No distributions found. Try another name or filter.
+    </p>
+    <p id="catalogue-status" class="catalogue-status" aria-live="polite"></p>
+  </section>
+</Layout>
+<script>
+  import '../client/distributions.ts';
+</script>

@@ -1,0 +1,67 @@
+---
+import {
+  colorLanguages,
+  colorAlgorithm,
+  colorExample,
+} from '../color-snippets.ts';
+import {
+  conversionAlgorithm,
+  conversionExample,
+} from '../color-conversion-snippets.ts';
+import { adjustmentDefaults } from '../color-math.ts';
+interface Props {
+  conversion?: boolean;
+}
+const { conversion = false } = Astro.props;
+const algorithm = conversion
+  ? conversionAlgorithm('js')
+  : colorAlgorithm('js', true);
+const example = conversion
+  ? conversionExample('js', {
+      source: 'srgb',
+      target: 'lab',
+      values: [59, 130, 246],
+    })
+  : colorExample('js', adjustmentDefaults);
+---
+
+<section class="code-section color-code">
+  <div class="code-heading">
+    <div>
+      <h2>
+        {conversion
+          ? 'Color-space conversion implementations'
+          : 'Pixel adjustment implementations'}
+      </h2>
+      <p>Direct arithmetic and standard-library math; no external libraries.</p>
+    </div>
+    <button type="button" id="color-copy-code" class="quiet-button">
+      Copy code
+    </button>
+  </div>
+  <div class="code-languages">
+    {Object.entries(colorLanguages).map(([id, name]) => (
+      <button
+        type="button"
+        data-color-language={id}
+        aria-pressed={id === 'js'}
+        class:list={{ selected: id === 'js' }}
+      >
+        {name}
+      </button>
+    ))}
+  </div>
+  <pre
+    class="code-source"
+    tabindex="0"
+  ><code id="color-code">{algorithm}</code></pre>
+  <h3 id="color-example-title">Example</h3>
+  <p id="color-example-note" class="color-small">
+    Copy code includes the functions and this example.
+  </p>
+  <pre
+    class="code-source color-code-example"
+    tabindex="0"
+  ><code id="color-example">{example}</code></pre>
+  <p id="color-code-status" role="status"></p>
+</section>
