@@ -1,0 +1,22 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import EasingDetail from '../../components/EasingDetail.astro';
+import { easings } from '../../easings.ts';
+export function getStaticPaths() {
+  return easings.map((easing) => ({
+    params: { slug: easing.id },
+    props: { easing },
+  }));
+}
+const { easing } = Astro.props;
+---
+
+<Layout
+  title={easing.name}
+  description={easing.description}
+  section="/easing"
+  id="easing-page"
+  accent={easing.color}
+>
+  <EasingDetail easing={easing} />
+</Layout>

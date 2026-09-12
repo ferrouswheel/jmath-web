@@ -1,0 +1,24 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import LinearAlgebra from '../../components/LinearAlgebra.astro';
+import { operationPages } from '../../algebra-operations.ts';
+export function getStaticPaths() {
+  return operationPages
+    .filter((p) => p.section === '/vectors')
+    .map((page) => ({
+      params: { slug: page.path.split('/').at(-1) },
+      props: { page },
+    }));
+}
+const { page } = Astro.props;
+---
+
+<Layout
+  title={page.title}
+  description={page.description}
+  section="/vectors"
+  id="linear-algebra-page"
+  accent={page.color}
+>
+  <LinearAlgebra pageKey={page.key} />
+</Layout>

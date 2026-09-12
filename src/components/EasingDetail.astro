@@ -1,0 +1,351 @@
+---
+import {
+  easings,
+  easingUrl,
+  initialEasingState,
+  type Easing,
+} from '../easings.ts';
+import {
+  easingFormula,
+  easingGraph,
+  easingResults,
+  easingInterpolation,
+  easingMotion,
+  easingMath,
+  easingDerivativeResults,
+} from '../easing-view.ts';
+import { easingCode } from '../easing-code.ts';
+import { highlightCode } from '../code-highlight.ts';
+interface Props {
+  easing: Easing;
+}
+const { easing } = Astro.props,
+  state = initialEasingState();
+const variants = easings.filter((e) => e.family === easing.family);
+---
+
+<a class="theorem-backlink" href="/easing">
+  ← Easing functions: meaning & families
+</a>
+<header class="la-intro">
+  <span class="eyebrow">TIME & MOTION</span>
+  <h1>{easing.name}</h1>
+  <p>{easing.description}</p>
+</header>
+<section class="easing-formula" aria-labelledby="easing-formula-title">
+  <h2 id="easing-formula-title">Easing formula · 0 ≤ t ≤ 1</h2>
+  <div class="la-math" set:html={easingFormula(easing)} />
+  <p>
+    E(t) is the normalised easing function. The Actual values graph converts it
+    into your transition’s values and elapsed seconds; Normalised shows E(t)
+    directly.
+  </p>
+  {easing.direction !== 'in' &&
+    !['linear', 'quadratic', 'cubic', 'quartic', 'quintic', 'sine'].includes(
+      easing.family,
+    ) && (
+      <p>
+        g is the ease-in profile defined above. Ease-out reverses it;
+        ease-in-out scales it to each half of the time interval.
+      </p>
+    )}
+  {easing.family === 'exponential' && (
+    <p>
+      The endpoint is explicitly set to zero in the base profile. This common
+      exponential convention has a small endpoint jump.
+    </p>
+  )}
+  {easing.family === 'elastic' && (
+    <p>
+      The base profile explicitly pins both endpoints to 0 and 1. The in-out
+      version mirrors this same profile; other easing libraries may tune its
+      oscillation period differently.
+    </p>
+  )}
+</section>
+{variants.length > 1 && (
+  <nav class="la-topic-nav" aria-label="Easing direction">
+    {variants.map((e) => (
+      <a
+        href={easingUrl(e)}
+        aria-current={e.id === easing.id ? 'page' : undefined}
+      >
+        {e.name}
+      </a>
+    ))}
+  </nav>
+)}
+<div data-easing={easing.id}>
+  <div class="la-workspace">
+    <form class="la-controls" id="easing-controls">
+      <div class="la-controls-heading">
+        <h2>Your transition</h2>
+        <button type="button" class="quiet-button" id="easing-reset">
+          Reset
+        </button>
+      </div>
+      <label class="la-field">
+        Time progress t
+        <input
+          type="number"
+          id="easing-t"
+          data-easing-input="t"
+          min="0"
+          max="1"
+          step="any"
+          required
+          value={state.t}
+        />
+        <input
+          type="range"
+          id="easing-scrub"
+          min="0"
+          max="1"
+          step="0.001"
+          value={state.t}
+          aria-label="Time progress slider"
+        />
+      </label>
+      <label class="la-field">
+        Start value
+        <input
+          type="number"
+          data-easing-input="start"
+          min="-1000"
+          max="1000"
+          step="any"
+          required
+          value={state.start}
+        />
+      </label>
+      <label class="la-field">
+        End value
+        <input
+          type="number"
+          data-easing-input="end"
+          min="-1000"
+          max="1000"
+          step="any"
+          required
+          value={state.end}
+        />
+      </label>
+      <label class="la-field">
+        Duration · seconds
+        <input
+          type="number"
+          data-easing-input="duration"
+          min="0.2"
+          max="10"
+          step="0.1"
+          required
+          value={state.duration}
+        />
+      </label>
+      <button type="button" id="easing-play" class="primary">
+        Play
+      </button>
+      <p id="easing-error" class="error" role="alert"></p>
+      <p>
+        Drag the graph to change time progress. Arrow keys on the point move by
+        0.01 (Shift: 0.1). Playback starts only when you press Play.
+      </p>
+      <noscript>
+        <p>
+          Enable JavaScript to edit this example and play the motion preview.
+        </p>
+      </noscript>
+    </form>
+    <div class="easing-visual">
+      <div
+        class="code-languages easing-mode-switch"
+        role="group"
+        aria-label="Graph values"
+      >
+        <button
+          type="button"
+          data-easing-mode="actual"
+          aria-pressed="true"
+          class="selected"
+        >
+          Actual values
+        </button>
+        <button
+          type="button"
+          data-easing-mode="normalized"
+          aria-pressed="false"
+        >
+          Normalised
+        </button>
+      </div>
+      <div class="easing-graph-legend">
+        <span id="easing-value-legend">Eased value</span>
+        <span id="easing-linear-legend">Dashed: linear value</span>
+      </div>
+      <fieldset class="easing-overlays">
+        <legend>Graph overlays · right axis</legend>
+        <label class="easing-velocity">
+          <input type="checkbox" id="easing-show-velocity" />
+          <span id="easing-velocity-label">Velocity · units/s</span>
+        </label>
+        <label class="easing-acceleration">
+          <input type="checkbox" id="easing-show-acceleration" />
+          <span id="easing-acceleration-label">Acceleration · units/s²</span>
+        </label>
+      </fieldset>
+      <div
+        id="easing-graph"
+        class="curve-draggable"
+        set:html={easingGraph(easing, state.t)}
+      />
+      <div
+        id="easing-results"
+        class="curve-results"
+        set:html={easingResults(easing, state)}
+      />
+      <p id="easing-overlay-note" class="curve-note" hidden>
+        Both overlays use the right axis and the units shown in their labels.
+        {easing.family === 'circular' &&
+          'Unbounded curves are clipped at the right-axis limits.'}{' '}
+        Gaps mark undefined derivatives or abrupt changes.
+      </p>
+      <div
+        id="easing-derivative-results"
+        class="curve-results"
+        set:html={easingDerivativeResults(easing, state)}
+      />
+      <p class="curve-note">
+        <span id="easing-axis-note">
+          Horizontal: elapsed seconds. Left axis: your value, including the
+          start and end values.
+        </span>{' '}
+        Changing graph modes keeps your transition settings.
+      </p>
+    </div>
+  </div>
+  <section class="easing-preview">
+    <h2>Velocity and acceleration at this time</h2>
+    <p>
+      Velocity tells you how quickly the value changes, including its direction.
+      Acceleration tells you how quickly that velocity changes. The graph
+      overlays and readouts follow the selected graph mode. Actual values use
+      the transition’s start, end, and duration, giving units/s and units/s².
+      Normalised mode shows E′(t) and E″(t), derivatives with respect to time
+      progress t.
+    </p>
+    <div
+      class="la-math"
+      set:html={easingMath(
+        String.raw`t=\frac{\tau}{D},\qquad v(\tau)=\frac{x_1-x_0}{D}E'(t),\qquad a(\tau)=\frac{x_1-x_0}{D^2}E''(t)`,
+      )}
+    />
+    <p>
+      Here τ is elapsed seconds, D is duration in seconds, and x₀ and x₁ are the
+      start and end values. Doubling the duration halves velocity and quarters
+      acceleration. Negative acceleration means velocity is decreasing; it does
+      not always mean slowing down.
+    </p>
+    <p>
+      At endpoints we use limits from inside the transition, without assuming
+      motion before or after it. “Undefined” marks jumps or corners; ∞ marks an
+      unbounded limit. Acceleration can also be undefined at the midpoint of an
+      ease-in-out curve. A transition with equal start and end values stays
+      still.
+    </p>
+  </section>
+  <section class="easing-preview">
+    <h2>Same duration, different movement</h2>
+    <div id="easing-motion" set:html={easingMotion(easing, state)} />
+    <p>
+      Both dots travel between the same start and end markers. Their positions
+      represent progress; overshoot remains visible beyond those markers.
+    </p>
+    <div
+      id="easing-interpolation"
+      class="la-math"
+      set:html={easingInterpolation(state)}
+    />
+  </section>
+  <p id="easing-status" class="la-sr-only" role="status" aria-live="polite"></p>
+</div>
+<section class="code-section" aria-labelledby="easing-code-title">
+  <div class="code-heading">
+    <div>
+      <h2 id="easing-code-title">Implementation</h2>
+      <p>
+        Standalone code for progress, velocityAt(t), and accelerationAt(t)
+        (Python: velocity_at and acceleration_at). Pass normalized time between
+        0 and 1; rates use the duration in seconds. Undefined derivatives return
+        null / None. Examples update when you edit inputs or pause playback.
+      </p>
+    </div>
+    <button id="easing-copy" class="quiet-button" type="button">
+      Copy code
+    </button>
+  </div>
+  <div class="code-languages" aria-label="Code language">
+    <button
+      type="button"
+      data-easing-language="js"
+      aria-pressed="true"
+      class="selected"
+    >
+      JavaScript
+    </button>
+    <button type="button" data-easing-language="python" aria-pressed="false">
+      Python
+    </button>
+  </div>
+  <pre
+    class="code-source"
+    tabindex="0"
+  ><code id="easing-code" data-code-language="js" set:html={highlightCode(easingCode(easing,state,'js'),'js')}/></pre>
+  <p id="easing-copy-status" role="status"></p>
+</section>
+<section class="la-foundations">
+  <h2>Reading this curve</h2>
+  <p>
+    A steeper section changes the value more quickly. Flat sections barely move.
+    A negative slope reverses the direction of progress, even though time
+    continues forward.
+  </p>
+  {['back', 'elastic'].includes(easing.family) && (
+    <p>
+      This function can leave the interval from 0 to 1. The corresponding value
+      can overshoot the start or end, so use it for properties that can
+      represent that motion.
+    </p>
+  )}
+  {easing.family === 'bounce' && (
+    <p>
+      The piecewise parabolas create rebounds. The slopes change abruptly at
+      their joins, so this models a stylized bounce rather than smooth
+      acceleration.
+    </p>
+  )}
+  {easing.family === 'circular' && (
+    <p>
+      The circular profile has an unbounded slope at one boundary of each base
+      segment. It is a position profile, not a model of physically bounded
+      acceleration.
+    </p>
+  )}
+  <p>
+    The mathematical functions here are defined by the displayed equations. CSS
+    easing keywords use particular Bézier curves.{' '}
+    <a
+      href="https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/easing-function"
+      target="_blank"
+      rel="noreferrer"
+    >
+      Read the CSS easing reference ↗
+    </a>
+  </p>
+  <a href="/easing" class="la-start">
+    Compare all easing families →
+  </a>
+</section>
+<script>
+  import { initializeEasing } from '../client/easing.ts';
+  initializeEasing();
+</script>

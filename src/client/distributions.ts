@@ -1,3 +1,4 @@
+import { renderProperties } from '../distribution-properties.ts';
 import { updateCode } from '../code-highlight.ts';
 import { chart, fmt } from '../distribution-visuals.ts';
 import {
@@ -143,9 +144,7 @@ function updatePlot() {
     mode === 'cdf' ? 'F(x) = P(X ≤ x)' : selected.formula;
 }
 function updateStats() {
-  $('#stats').innerHTML = Object.entries(selected.stats(values))
-    .map(([k, v]) => `<div><span>${k}</span><strong>${fmt(v)}</strong></div>`)
-    .join('');
+  $('#stats').innerHTML = renderProperties(selected, values);
   updateProbability();
 }
 function updateProbability() {

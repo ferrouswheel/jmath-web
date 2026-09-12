@@ -2,7 +2,6 @@ import {
   bezier,
   polynomial,
   curveResult,
-  curveFormat,
   type Curve,
   type CurveState,
 } from './curves.ts';
@@ -15,6 +14,32 @@ export const curvePlot = {
   top: 25,
   bottom: 42,
 };
+// Use readable multiples of 1, 2, or 5 rather than labelling arbitrary
+// fractions of the padded graph bounds. Keep bounds unchanged for dragging.
+export function curveTicks(min: number, max: number) {
+  const roughStep = (max - min) / 5;
+  const magnitude = 10 ** Math.floor(Math.log10(roughStep));
+  const step =
+    [1, 2, 5, 10].reduce((best, factor) =>
+      Math.abs(Math.log((factor * magnitude) / roughStep)) <
+      Math.abs(Math.log((best * magnitude) / roughStep))
+        ? factor
+        : best,
+    ) * magnitude;
+  const precision = Math.max(0, -Math.floor(Math.log10(step)));
+  const ticks: { value: number; label: string }[] = [];
+  const first = Math.ceil(min / step),
+    last = Math.floor(max / step);
+  for (let i = first; i <= last; i++) {
+    const value = Number((i * step).toFixed(precision));
+    ticks.push({
+      value,
+      label: value === 0 ? '0' : String(value).replace('-', '−'),
+    });
+  }
+  return ticks;
+}
+
 export function curveGraph(curve: Curve, state: CurveState, mini = false) {
   const { width: w, height: h, left, right, top, bottom } = curvePlot;
   const parametric = curve.id === 'bezier';
@@ -40,15 +65,16 @@ export function curveGraph(curve: Curve, state: CurveState, mini = false) {
   const line = (a: number[], b: number[], css: string) =>
     `<line x1="${px(a[0])}" y1="${py(a[1])}" x2="${px(b[0])}" y2="${py(b[1])}" class="${css}"/>`;
   let grid = '';
-  if (!mini)
-    for (let i = 0; i <= 4; i++) {
-      const x = xmin + ((xmax - xmin) * i) / 4,
-        y = ymin + ((ymax - ymin) * i) / 4;
-      grid +=
-        line([x, ymin], [x, ymax], 'curve-gridline') +
-        line([xmin, y], [xmax, y], 'curve-gridline');
-      grid += `<text x="${px(x)}" y="${h - 17}" text-anchor="middle">${curveFormat(x)}</text><text x="${left - 9}" y="${py(y) + 4}" text-anchor="end">${curveFormat(y)}</text>`;
+  if (!mini) {
+    for (const { value: x, label } of curveTicks(xmin, xmax)) {
+      grid += line([x, ymin], [x, ymax], 'curve-gridline');
+      grid += `<text class="curve-tick curve-tick-x" x="${px(x)}" y="${h - 17}" text-anchor="middle">${label}</text>`;
     }
+    for (const { value: y, label } of curveTicks(ymin, ymax)) {
+      grid += line([xmin, y], [xmax, y], 'curve-gridline');
+      grid += `<text class="curve-tick curve-tick-y" x="${left - 9}" y="${py(y) + 4}" text-anchor="end">${label}</text>`;
+    }
+  }
   let construction = '';
   if (parametric && !mini) {
     const levels = bezier(state.points, state.input).levels;
@@ -79,7 +105,7 @@ export function curveGraph(curve: Curve, state: CurveState, mini = false) {
       : '';
   return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${curve.name} curve${mini ? '' : '; highlighted point and tangent'}" class="curve-svg" style="--curve-color:${curve.color}">
     ${grid}${line([xmin, 0], [xmax, 0], 'curve-axis')}${line([0, ymin], [0, ymax], 'curve-axis')}
-    ${construction}<polyline points="${samples.map(pair).join(' ')}" class="curve-path"/>${tangent}${controls}
-    ${mini ? '' : `<circle cx="${px(result.point[0])}" cy="${py(result.point[1])}" r="5" class="curve-selected"/><text x="${w - 16}" y="${py(0) - 8}">x</text><text x="${px(0) + 10}" y="17">y</text>`}
+    ${!mini && !parametric ? line([state.input, 0], result.point, 'curve-evaluation-guide') : ''}${construction}<polyline points="${samples.map(pair).join(' ')}" class="curve-path"/>${tangent}${controls}
+    ${mini ? '' : `<circle cx="${px(result.point[0])}" cy="${py(result.point[1])}" r="${parametric ? 5 : 9}" class="curve-selected${parametric ? '' : ' curve-evaluation'}" ${parametric ? '' : `data-evaluation tabindex="0" role="slider" aria-label="Evaluation x; drag horizontally or use arrow keys" aria-valuemin="-5" aria-valuemax="5" aria-valuenow="${state.input}"`}/><text x="${w - 16}" y="${py(0) - 8}">x</text><text x="${px(0) + 10}" y="17">y</text>`}
   </svg>`;
 }

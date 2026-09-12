@@ -1,0 +1,16 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import LinearAlgebra from '../../components/LinearAlgebra.astro';
+import { algebraPages } from '../../linear-algebra-content.ts';
+const page = algebraPages.find((p) => p.id === 'eigenvalues')!;
+---
+
+<Layout
+  title={page.title}
+  description={page.description}
+  section="/eigenvalues"
+  id="linear-algebra-page"
+  accent={page.color}
+>
+  <LinearAlgebra pageKey="eigenvalues" />
+</Layout>

@@ -152,13 +152,22 @@ test('curve controls, validation and shareable settings work', async ({
 }) => {
   await page.goto('/curves/quadratic?a=2&b=-3&c=1&x=4');
   await expect(page.locator('#curve-point')).toHaveText('(4, 21)');
+  await expect(page.locator('#curve-equation annotation')).toHaveText(
+    'y = 2x^{2} - 3x + 1',
+  );
   await expect(page.locator('#curve-derivative')).toHaveText('13');
   await page.locator('#curve-coefficient-0').fill('0');
   await expect(page.locator('#curve-note')).toContainText('linear function');
   await expect(page.locator('#curve-point')).toHaveText('(4, -11)');
+  await expect(page.locator('#curve-equation annotation')).toHaveText(
+    'y = -3x + 1',
+  );
   await page.locator('#curve-input').fill('6');
   await expect(page.locator('#curve-error')).toContainText('last valid');
   await expect(page.locator('#curve-point')).toHaveText('(4, -11)');
+  await expect(page.locator('#curve-equation annotation')).toHaveText(
+    'y = -3x + 1',
+  );
   await expect(page.locator('#curve-share')).toBeDisabled();
   await page.locator('#curve-input').fill('2');
   await page.reload();
@@ -175,6 +184,9 @@ test('curve controls, validation and shareable settings work', async ({
   }
   await page.locator('#curve-reset').click();
   await expect(page.locator('#curve-point')).toHaveText('(1, 0)');
+  await expect(page.locator('#curve-equation annotation')).toHaveText(
+    'y = x^{2} - 1',
+  );
 });
 
 test('Bezier points can be edited and dragged on desktop and fit mobile', async ({
@@ -183,10 +195,19 @@ test('Bezier points can be edited and dragged on desktop and fit mobile', async 
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/curves/bezier');
+  const cubicEquation = await page
+    .locator('#curve-equation annotation')
+    .textContent();
   await page.locator('#curve-degree').selectOption('2');
+  await expect(page.locator('#curve-equation annotation')).not.toHaveText(
+    cubicEquation!,
+  );
   await expect(page.locator('[data-point-input]')).toHaveCount(6);
   await page.getByRole('spinbutton', { name: 'P1 y', exact: true }).fill('2');
   await expect(page.locator('#curve-point')).toHaveText('(0, 0)');
+  const equationBeforeDrag = await page
+    .locator('#curve-equation annotation')
+    .textContent();
   const handle = page.locator('#curve-graph [data-point="1"]');
   const box = (await handle.boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
@@ -200,9 +221,18 @@ test('Bezier points can be edited and dragged on desktop and fit mobile', async 
   await expect(
     page.getByRole('spinbutton', { name: 'P1 x', exact: true }),
   ).not.toHaveValue('0');
+  await expect(page.locator('#curve-equation annotation')).not.toHaveText(
+    equationBeforeDrag!,
+  );
+  const equationAfterDrag = await page
+    .locator('#curve-equation annotation')
+    .textContent();
   const point = await page.locator('#curve-point').textContent();
   await page.reload();
   await expect(page.locator('#curve-point')).toHaveText(point!);
+  await expect(page.locator('#curve-equation annotation')).toHaveText(
+    equationAfterDrag!,
+  );
   await page.screenshot({
     path: testInfo.outputPath('curves-desktop.png'),
     fullPage: true,

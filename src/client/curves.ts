@@ -13,6 +13,7 @@ import {
   type Point,
 } from '../curves.ts';
 import { curveGraph, curvePlot } from '../curve-visuals.ts';
+import { renderCurveEquation } from '../curve-equation.ts';
 import { curveSnippet } from '../curve-snippets.ts';
 import { updateCode } from '../code-highlight.ts';
 
@@ -29,7 +30,7 @@ export function initializeCurve() {
   const initial = curveFromSearch(curve, location.search);
   let state = initial.state,
     language = 'js',
-    drag: number | null = null;
+    drag: { pointer: number; point: number | null } | null = null;
   const graph = $('#curve-graph');
   const number = (input: HTMLInputElement) =>
     input.value.trim() === '' ? NaN : Number(input.value);
@@ -70,6 +71,7 @@ export function initializeCurve() {
   function render(save = true, force = false) {
     const result = curveResult(curve!, state);
     graph.innerHTML = curveGraph(curve!, state);
+    $('#curve-equation').innerHTML = renderCurveEquation(curve!, state);
     $('#curve-point').textContent =
       `(${result.point.map(curveFormat).join(', ')})`;
     $('#curve-derivative').textContent = parametric
@@ -121,7 +123,7 @@ export function initializeCurve() {
       error = curveError(curve, next);
     if (error) {
       $('#curve-error').textContent =
-        `${error} The graph and code retain the last valid settings.`;
+        `${error} The graph, equation, and code retain the last valid settings.`;
       $('#curve-copy-code').setAttribute('disabled', '');
       $('#curve-share').setAttribute('disabled', '');
       return;
@@ -184,40 +186,109 @@ export function initializeCurve() {
       $('#curve-share-status').textContent = `Copy this link: ${url}`;
     }
   });
+  const clamp = (n: number) =>
+    Math.round(Math.max(-5, Math.min(5, n)) * 100) / 100;
+  function graphPoint(event: PointerEvent) {
+    const svg = graph.querySelector('svg')!,
+      matrix = svg.getScreenCTM();
+    if (!matrix) return null;
+    return new DOMPoint(event.clientX, event.clientY).matrixTransform(
+      matrix.inverse(),
+    );
+  }
+  function moveSelection(local: DOMPoint) {
+    const { width, height, left, right, top, bottom } = curvePlot;
+    if (drag?.point === null) {
+      state.input = clamp(
+        -5 + ((local.x - left) / (width - left - right)) * 10,
+      );
+    } else if (drag) {
+      const point: Point = [
+        clamp(-6 + ((local.x - left) / (width - left - right)) * 12),
+        clamp(6 - ((local.y - top) / (height - top - bottom)) * 12),
+      ];
+      state.points[drag.point] = point;
+    }
+    render(true, true);
+  }
   graph.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0 || drag) return;
     const handle = (event.target as Element).closest<SVGCircleElement>(
       '[data-point]',
     );
-    if (!handle || !parametric || event.button !== 0) return;
-    drag = Number(handle.dataset.point);
+    const local = graphPoint(event);
+    if (!local || (parametric && !handle)) return;
+    const { left, right, top, bottom, width, height } = curvePlot;
+    if (
+      !parametric &&
+      !(event.target as Element).matches('[data-evaluation]') &&
+      (local.x < left ||
+        local.x > width - right ||
+        local.y < top ||
+        local.y > height - bottom)
+    )
+      return;
+    drag = {
+      pointer: event.pointerId,
+      point: parametric ? Number(handle!.dataset.point) : null,
+    };
+    // The container survives replacement of the SVG during live updates.
     graph.setPointerCapture(event.pointerId);
     event.preventDefault();
+    graph.classList.add('curve-dragging');
+    if (!parametric) moveSelection(local);
   });
   graph.addEventListener('pointermove', (event) => {
-    if (drag === null) return;
-    const svg = graph.querySelector('svg')!,
-      matrix = svg.getScreenCTM();
-    if (!matrix) return;
-    const p = svg.createSVGPoint();
-    p.x = event.clientX;
-    p.y = event.clientY;
-    const local = p.matrixTransform(matrix.inverse());
-    const { width, height, left, right, top, bottom } = curvePlot;
-    const clamp = (n: number) =>
-      Math.round(Math.max(-5, Math.min(5, n)) * 100) / 100;
-    const point: Point = [
-      clamp(-6 + ((local.x - left) / (width - left - right)) * 12),
-      clamp(6 - ((local.y - top) / (height - top - bottom)) * 12),
-    ];
-    state.points[drag] = point;
-    render(true, true);
+    if (!drag || event.pointerId !== drag.pointer) return;
+    const local = graphPoint(event);
+    if (!local) return;
+    event.preventDefault();
+    moveSelection(local);
   });
-  const stopDrag = () => {
+  const stopDrag = (event: PointerEvent) => {
+    if (!drag || drag.pointer !== event.pointerId) return;
+    const evaluation = drag.point === null;
     drag = null;
+    if (graph.hasPointerCapture(event.pointerId))
+      graph.releasePointerCapture(event.pointerId);
+    graph.classList.remove('curve-dragging');
+    if (evaluation)
+      graph
+        .querySelector<SVGCircleElement>('[data-evaluation]')
+        ?.focus({ preventScroll: true });
   };
   graph.addEventListener('pointerup', stopDrag);
   graph.addEventListener('pointercancel', stopDrag);
   graph.addEventListener('lostpointercapture', stopDrag);
+  graph.addEventListener('keydown', (event) => {
+    if (!(event.target as Element).matches('[data-evaluation]')) return;
+    if (
+      ![
+        'ArrowLeft',
+        'ArrowRight',
+        'ArrowUp',
+        'ArrowDown',
+        'Home',
+        'End',
+      ].includes(event.key)
+    )
+      return;
+    event.preventDefault();
+    const step = event.shiftKey ? 1 : 0.1;
+    state.input =
+      event.key === 'Home'
+        ? -5
+        : event.key === 'End'
+          ? 5
+          : clamp(
+              state.input +
+                (['ArrowLeft', 'ArrowDown'].includes(event.key) ? -step : step),
+            );
+    render(true, true);
+    graph
+      .querySelector<SVGCircleElement>('[data-evaluation]')
+      ?.focus({ preventScroll: true });
+  });
   window.addEventListener('popstate', () => {
     const restored = curveFromSearch(curve, location.search);
     state = restored.state;

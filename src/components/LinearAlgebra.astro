@@ -1,0 +1,312 @@
+---
+import {
+  operationByKey,
+  operationPages,
+  operationState,
+  operationPresets,
+} from '../algebra-operations.ts';
+import { renderAlgebra, math } from '../linear-algebra-view.ts';
+import { algebraCode } from '../algebra-code.ts';
+import { highlightCode } from '../code-highlight.ts';
+interface Props {
+  pageKey: string;
+}
+const page = operationByKey(Astro.props.pageKey);
+const id = page.engine;
+const state = operationState(page);
+const initial = renderAlgebra(id, state);
+const isVector = id === 'vectors',
+  isJacobian = id === 'jacobians';
+const hasB =
+  id === 'hadamard' ||
+  (id === 'matrices' &&
+    ['add', 'subtract', 'multiply'].includes(page.operation));
+const hasV = isVector
+  ? !['scale', 'normalize', 'magnitude'].includes(page.operation)
+  : id === 'eigenvalues' ||
+    (id === 'matrices' && !['rank', 'trace'].includes(page.operation));
+const related = operationPages.filter(
+  (p) => p.section === page.section && p.key !== page.key,
+);
+const examples = operationPresets(page);
+---
+
+<a
+  class="theorem-backlink"
+  href={page.section === '/eigenvalues' ? '/matrices' : page.section}
+>
+  ← {isVector ? 'Vectors' : 'Matrices'}: meaning & operations
+</a>
+<header class="la-intro">
+  <span class="eyebrow">
+    LINEAR ALGEBRA ·{' '}
+    {isVector
+      ? '2D VECTORS'
+      : isJacobian
+        ? 'MAPS OF THE PLANE'
+        : '2 × 2 MATRICES'}
+  </span>
+  <h1>{page.title}</h1>
+  <p class="la-interpretation">
+    <strong>{page.description}</strong> {page.interpretation}
+  </p>
+</header>
+<div class="la-app" data-algebra={id} data-operation-page={page.key}>
+  <div class="la-presets" aria-label="Example presets">
+    <span>Try an example</span>
+    {examples.map((p, i) => (
+      <button type="button" data-preset={i}>
+        {p.label}
+      </button>
+    ))}
+  </div>
+  <div class="la-workspace">
+    <form class="la-controls" id="la-controls">
+      <div class="la-controls-heading">
+        <h2>{isJacobian ? 'Evaluation point' : 'Your inputs'}</h2>
+        <button class="quiet-button" type="button" id="la-reset">
+          Reset
+        </button>
+      </div>
+      {isJacobian && (
+        <label class="la-field">
+          Nonlinear map
+          <select id="la-map" name="map">
+            <option value="square">Complex squaring · (x² − y², 2xy)</option>
+            <option value="polar">Polar · (r cos θ, r sin θ)</option>
+            <option value="shear">Nonlinear shear · (x, y + x²)</option>
+          </select>
+        </label>
+      )}
+      {!isVector && !isJacobian && (
+        <fieldset class="la-matrix-control">
+          <legend>Matrix A</legend>
+          <div class="la-matrix-inputs">
+            {state.a.map((value, i) => (
+              <input
+                type="number"
+                min="-10"
+                max="10"
+                step="any"
+                required
+                value={value}
+                data-group="a"
+                data-index={i}
+                aria-label={`A row ${Math.floor(i / 2) + 1} column ${(i % 2) + 1}`}
+              />
+            ))}
+          </div>
+          <p>Rows run left to right; vectors are columns.</p>
+        </fieldset>
+      )}
+      {hasB && (
+        <fieldset class="la-matrix-control" id="la-b-control">
+          <legend>Matrix B</legend>
+          <div class="la-matrix-inputs">
+            {state.b.map((value, i) => (
+              <input
+                type="number"
+                min="-10"
+                max="10"
+                step="any"
+                required
+                value={value}
+                data-group="b"
+                data-index={i}
+                aria-label={`B row ${Math.floor(i / 2) + 1} column ${(i % 2) + 1}`}
+              />
+            ))}
+          </div>
+        </fieldset>
+      )}
+      {(isVector || isJacobian) && (
+        <fieldset class="la-vector-control">
+          <legend>{isJacobian ? 'Point p' : 'Vector u · blue'}</legend>
+          <div>
+            {state.u.map((value, i) => (
+              <label>
+                <span data-point-label={i}>
+                  {isJacobian ? ['x / r', 'y / θ (radians)'][i] : ['x', 'y'][i]}
+                </span>
+                <input
+                  type="number"
+                  min="-10"
+                  max="10"
+                  step="any"
+                  required
+                  value={value}
+                  data-group="u"
+                  data-index={i}
+                />
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
+      {hasV && (
+        <fieldset class="la-vector-control">
+          <legend>{isVector ? 'Vector v · orange' : 'Test vector v'}</legend>
+          <div>
+            {state.v.map((value, i) => (
+              <label>
+                <span>{['x', 'y'][i]}</span>
+                <input
+                  type="number"
+                  min="-10"
+                  max="10"
+                  step="any"
+                  required
+                  value={value}
+                  data-group="v"
+                  data-index={i}
+                />
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
+      {page.operation === 'scale' && (
+        <label
+          class="la-field"
+          id="la-k-control"
+          hidden={state.operation !== 'scale'}
+        >
+          Scalar k
+          <input
+            type="number"
+            min="-10"
+            max="10"
+            step="any"
+            required
+            value={state.k}
+            data-scalar="k"
+          />
+        </label>
+      )}
+      {isJacobian && (
+        <label class="la-field">
+          Neighbourhood half-width δ
+          <input
+            type="range"
+            min="0.01"
+            max="1"
+            step="0.01"
+            value={state.delta}
+            data-scalar="delta"
+          />
+          <output id="la-delta-value">{state.delta}</output>
+        </label>
+      )}
+      {id === 'eigenvalues' && (
+        <label class="la-field">
+          Transformation progress t
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value={state.t}
+            data-scalar="t"
+          />
+          <output id="la-t-value">{state.t}</output>
+          <span>0: original v · 1: transformed Av</span>
+        </label>
+      )}
+      <p id="la-error" class="error" role="alert"></p>
+      <p class="la-controls-note">
+        Drag hollow handles or edit coordinates to update the example. Focus a
+        handle and use arrow keys for steps of 0.1 (Shift: 1). Inputs range from
+        −10 to 10.
+      </p>
+      <noscript>
+        <p>
+          These are the default examples. Enable JavaScript to change inputs and
+          update the diagrams.
+        </p>
+      </noscript>
+    </form>
+    <div id="la-visual" class="la-visual">
+      <Fragment set:html={initial.visual} />
+    </div>
+  </div>
+  <section class="la-calculations" aria-labelledby="la-calculations-title">
+    <h2 id="la-calculations-title">Calculations & interpretation</h2>
+    <div id="la-results" class="la-results">
+      <Fragment set:html={initial.results} />
+    </div>
+  </section>
+  <p id="la-status" class="la-sr-only" role="status" aria-live="polite">
+    {initial.summary}
+  </p>
+</div>
+<section class="code-section la-code" aria-labelledby="la-code-title">
+  <div class="code-heading">
+    <div>
+      <h2 id="la-code-title">Code for this operation</h2>
+      <p>
+        Uses the current valid inputs. Python requires NumPy; JavaScript runs
+        without dependencies.
+      </p>
+    </div>
+    <button type="button" id="la-copy-code" class="quiet-button">
+      Copy code
+    </button>
+  </div>
+  <div class="code-languages" aria-label="Code language">
+    <button
+      type="button"
+      data-la-language="python"
+      class="selected"
+      aria-pressed="true"
+    >
+      Python · NumPy
+    </button>
+    <button type="button" data-la-language="js" aria-pressed="false">
+      JavaScript
+    </button>
+  </div>
+  <pre
+    class="code-source"
+    tabindex="0"
+  ><code id="la-code" data-code-language="python" set:html={highlightCode(algebraCode(page, state, 'python'), 'python')} /></pre>
+  <p id="la-copy-status" role="status"></p>
+  <p class="la-code-note">
+    {['rank', 'inverse', 'eigenvalues'].includes(page.operation) &&
+      'Near singular matrices or repeated eigenvalues, numerical tolerances can affect the result. NumPy and this example may classify borderline cases differently. '}
+    <a
+      href="https://numpy.org/doc/stable/reference/routines.linalg.html"
+      target="_blank"
+      rel="noreferrer"
+    >
+      NumPy linear algebra reference ↗
+    </a>
+  </p>
+</section>
+{page.engine === 'eigenvalues' && (
+  <section class="la-foundations">
+    <h2>Finding the preserved directions</h2>
+    <div
+      class="la-math"
+      set:html={math(
+        String.raw`\lambda_{1,2}=\frac{\operatorname{tr}A\pm\sqrt{(\operatorname{tr}A)^2-4\det A}}2,\qquad (A-\lambda I)\mathbf v=0`,
+      )}
+    />
+    <p>
+      Choose a nonzero solution for each eigenvalue. A repeated eigenvalue may
+      have only one independent eigenvector. Complex conjugate eigenvalues have
+      no real eigendirections in the plane.
+    </p>
+  </section>
+)}
+<nav class="la-related" aria-label="Explore linear algebra">
+  {related.map((p) => (
+    <a href={p.path}>
+      <strong>{p.short} →</strong>
+      <span>{p.description}</span>
+    </a>
+  ))}
+</nav>
+<script>
+  import { initializeAlgebra } from '../client/linear-algebra.ts';
+  initializeAlgebra();
+</script>

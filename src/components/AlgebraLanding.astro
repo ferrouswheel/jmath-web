@@ -1,0 +1,247 @@
+---
+import { operationPages } from '../algebra-operations.ts';
+import { math } from '../linear-algebra-view.ts';
+interface Props {
+  kind: 'vectors' | 'matrices';
+}
+const { kind } = Astro.props;
+const vector = kind === 'vectors';
+const operations = operationPages.filter((p) => p.section === `/${kind}`);
+const groups = vector
+  ? [
+      { title: 'Combine and resize', ops: ['add', 'subtract', 'scale'] },
+      {
+        title: 'Measure and compare',
+        ops: ['magnitude', 'normalize', 'dot', 'angle'],
+      },
+      {
+        title: 'Separate components and measure area',
+        ops: ['project', 'area'],
+      },
+    ]
+  : [
+      {
+        title: 'Calculate with matrices',
+        ops: [
+          'add',
+          'subtract',
+          'scale',
+          'multiply',
+          'transform',
+          'transpose',
+          'inverse',
+          'hadamard',
+        ],
+      },
+      { title: 'Understand a matrix', ops: ['determinants', 'rank', 'trace'] },
+      {
+        title: 'Local change and preserved directions',
+        ops: ['jacobians', 'eigenvalues'],
+      },
+    ];
+---
+
+<header class="la-intro la-landing-intro">
+  <span class="eyebrow">LINEAR ALGEBRA</span>
+  <h1>{vector ? 'Vectors' : 'Matrices'}</h1>
+  <p>
+    {vector
+      ? 'A vector is an ordered set of quantities. When those quantities are coordinates, it becomes an arrow with a size and a direction.'
+      : 'A matrix is a rectangular arrangement of numbers. It can store a table of measurements or describe a rule that mixes inputs into outputs.'}
+  </p>
+</header>
+<section class="la-meaning">
+  <div>
+    <h2>
+      {vector
+        ? 'From coordinates to a movement'
+        : 'From columns to a transformation'}
+    </h2>
+    <div
+      class="la-math"
+      set:html={
+        vector
+          ? math(
+              String.raw`\mathbf v=\begin{bmatrix}3\\2\end{bmatrix}=3\mathbf e_x+2\mathbf e_y`,
+            )
+          : math(
+              String.raw`A=\begin{bmatrix}2&1\\0&1\end{bmatrix},\qquad A\begin{bmatrix}x\\y\end{bmatrix}=x\begin{bmatrix}2\\0\end{bmatrix}+y\begin{bmatrix}1\\1\end{bmatrix}`,
+            )
+      }
+    />
+    <p>
+      {vector
+        ? 'Here (3, 2) means three units to the right and two units up. The same arrow can represent a displacement, velocity, or force, depending on its units. Sliding the arrow without rotating it does not change the vector.'
+        : 'The first column tells you where the horizontal unit vector goes; the second tells you where the vertical unit vector goes. Every other vector follows from the same weighted combination of those columns.'}
+    </p>
+    <a
+      class="la-start"
+      href={vector ? '/vectors/addition' : '/matrices/matrix-vector'}
+    >
+      {vector ? 'Try adding two movements' : 'Try transforming a vector'} →
+    </a>
+  </div>
+  {vector ? (
+    <svg
+      viewBox="0 0 460 290"
+      role="img"
+      aria-label="Vector three units right and two units up"
+    >
+      <path d="M35 235H430M65 265V25" stroke="#aeb7c5" />
+      <path
+        d="M65 235H335V55"
+        fill="none"
+        stroke="#9ba5b5"
+        stroke-dasharray="6 5"
+      />
+      <path d="M65 235L335 55" stroke="#527cb5" stroke-width="4" />
+      <path d="M335 55l-17 3 9 13Z" fill="#527cb5" />
+      <text x="350" y="53">
+        v = (3, 2)
+      </text>
+      <text x="185" y="259">
+        3 units
+      </text>
+      <text x="350" y="168">
+        2 units
+      </text>
+      <text x="420" y="258">
+        x
+      </text>
+      <text x="44" y="35">
+        y
+      </text>
+    </svg>
+  ) : (
+    <svg
+      viewBox="0 0 460 290"
+      role="img"
+      aria-label="Matrix transforms a unit square into a parallelogram"
+    >
+      <path d="M25 235H435M65 260V30" stroke="#aeb7c5" />
+      <path
+        d="M65 235h90v-90H65Z"
+        fill="none"
+        stroke="#9ba5b5"
+        stroke-dasharray="6 5"
+      />
+      <path
+        d="M65 235H245L335 145H155Z"
+        fill="#8468ad"
+        fill-opacity="0.14"
+        stroke="#8468ad"
+        stroke-width="2"
+      />
+      <path d="M65 235H245" stroke="#527cb5" stroke-width="4" />
+      <path d="M65 235L155 145" stroke="#be7459" stroke-width="4" />
+      <text x="237" y="262">
+        column 1
+      </text>
+      <text x="133" y="128">
+        column 2
+      </text>
+      <text x="230" y="80">
+        Unit square → parallelogram
+      </text>
+    </svg>
+  )}
+</section>
+<section class="la-meaning-cards" aria-label="What these objects can represent">
+  {vector ? (
+    <>
+      <article>
+        <h2>Motion and force</h2>
+        <p>
+          A velocity vector gives speed and direction. A force vector gives
+          strength and direction. Adding vectors combines their effects.
+        </p>
+      </article>
+      <article>
+        <h2>Position and displacement</h2>
+        <p>
+          A position vector points from a chosen origin to a location. Subtract
+          two positions to get the displacement between them.
+        </p>
+      </article>
+      <article>
+        <h2>A list of features</h2>
+        <p>
+          A vector can also store a colour, a set of measurements, or model
+          features. Components may have different units; scaling them
+          appropriately matters before comparing lengths or angles.
+        </p>
+      </article>
+    </>
+  ) : (
+    <>
+      <article>
+        <h2>A linear rule</h2>
+        <p>
+          A matrix can rotate, stretch, reflect, shear, or project. A linear map
+          preserves the origin and respects vector addition and scaling.
+        </p>
+      </article>
+      <article>
+        <h2>A data table</h2>
+        <p>
+          Rows might be observations and columns might be features. Transpose
+          swaps those roles; addition and entrywise products combine matching
+          measurements.
+        </p>
+      </article>
+      <article>
+        <h2>Relationships and change</h2>
+        <p>
+          Matrices can encode network connections, covariance, or the
+          sensitivity of outputs to inputs. The meaning comes from what each row
+          and column represents.
+        </p>
+      </article>
+    </>
+  )}
+</section>
+<div class="la-operation-sections">
+  <h2>Explore an operation</h2>
+  <p>
+    Each page explains one operation, with editable inputs, a geometric example,
+    and Python/NumPy and JavaScript code.
+  </p>
+  {groups.map((group) => (
+    <section>
+      <h3>{group.title}</h3>
+      <div class="la-operation-grid">
+        {[
+          ...operations,
+          ...(!vector
+            ? operationPages.filter((p) => p.engine === 'eigenvalues')
+            : []),
+        ]
+          .filter((p) => group.ops.includes(p.operation))
+          .map((p) => (
+            <a href={p.path}>
+              <strong>{p.short} →</strong>
+              <span>{p.description}</span>
+            </a>
+          ))}
+      </div>
+    </section>
+  ))}
+</div>
+<section class="la-foundations">
+  <h2>
+    {vector
+      ? 'Start in two dimensions, then generalize'
+      : 'Dimensions tell you what fits'}
+  </h2>
+  <p>
+    {vector
+      ? 'These diagrams use two coordinates so every component is visible. The same addition, scaling, dot-product, magnitude, and projection rules work in higher dimensions. The signed-area example is specifically two-dimensional.'
+      : 'An m × n matrix has m rows and n columns. As a linear map, it takes n inputs to m outputs. These explorers use 2 × 2 examples so the geometry fits on a plane. Matrix multiplication requires matching inner dimensions; a determinant or ordinary inverse requires a square matrix.'}
+  </p>
+  <a class="la-start" href={vector ? '/matrices' : '/vectors'}>
+    {vector
+      ? 'Next: matrices as rules for vectors'
+      : 'Review vectors and their meaning'}{' '}
+    →
+  </a>
+</section>

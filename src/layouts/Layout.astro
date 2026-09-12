@@ -2,6 +2,8 @@
 import '../style.css';
 import 'katex/dist/katex.min.css';
 import { theorems } from '../theorems.ts';
+import { operationPages } from '../algebra-operations.ts';
+import { easings } from '../easings.ts';
 import { curves } from '../curves.ts';
 interface Props {
   title: string;
@@ -22,7 +24,21 @@ const navigation = [
   ['/random-tools', '⚄', 'Dice & coins', 2],
   ['/sequences', '▦', 'Sequences', 8],
   ['/trigonometry', '∿', 'Trigonometry', 6],
+  [
+    '/vectors',
+    '↗',
+    'Vectors',
+    operationPages.filter((p) => p.section === '/vectors').length,
+  ],
+  [
+    '/matrices',
+    '▤',
+    'Matrices',
+    operationPages.filter((p) => p.section === '/matrices').length,
+  ],
+  ['/eigenvalues', 'λ', 'Eigenvalues & vectors', 1],
   ['/curves', '⌁', 'Curves', curves.length],
+  ['/easing', '↝', 'Easing', easings.length],
   ['/color-math', '◐', 'Color math', 2],
   ['/theorems', '∴', 'Theorems', theorems.length],
 ];

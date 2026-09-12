@@ -9,6 +9,7 @@ import {
   type Curve,
 } from '../curves.ts';
 import documents from '../generated/curves.json' with { type: 'json' };
+import { renderCurveEquation } from '../curve-equation.ts';
 import { curveGraph } from '../curve-visuals.ts';
 import { curveSnippet, curveLanguages } from '../curve-snippets.ts';
 import { highlightCode } from '../code-highlight.ts';
@@ -32,6 +33,20 @@ const document = documents.find((d) => d.id === curve.id)!;
   <h1>{curve.name} curves</h1>
   <p>{curve.description}</p>
 </header>
+<section
+  class="curve-equation curve-equation-top"
+  style={`--curve-color:${curve.color}`}
+  aria-labelledby="curve-equation-title"
+>
+  <h2 id="curve-equation-title">Current curve equation</h2>
+  <div id="curve-equation" set:html={renderCurveEquation(curve, state)} />
+  {parametric && (
+    <p>
+      Parametric coordinates from the current control points. Expanded
+      coefficients are rounded to 12 significant digits.
+    </p>
+  )}
+</section>
 <section
   class="curve-workspace"
   data-curve={curve.id}
@@ -140,7 +155,7 @@ const document = documents.find((d) => d.id === curve.id)!;
       <span>Tangent</span>
       {parametric && <span>Control polygon</span>}
     </div>
-    <div id="curve-graph" class:list={{ 'curve-draggable': parametric }}>
+    <div id="curve-graph" class="curve-draggable">
       <Fragment set:html={curveGraph(curve, state)} />
     </div>
     <div class="curve-results" aria-live="polite" aria-atomic="true">
@@ -169,7 +184,7 @@ const document = documents.find((d) => d.id === curve.id)!;
     <p class="curve-note">
       {parametric
         ? 'Coordinates range from −5 to 5. All control points stay visible.'
-        : 'The graph shows −5 ≤ x ≤ 5; the polynomial continues beyond this window. Coefficients range from −5 to 5.'}
+        : 'Click the plot or drag the highlighted point horizontally to change x. Arrow keys on the point adjust x by 0.1 (Shift: 1). The graph shows −5 ≤ x ≤ 5; the polynomial continues beyond this window.'}
     </p>
     <noscript>
       <p>

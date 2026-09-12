@@ -1,0 +1,117 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { easingFamilies, easings, easingUrl } from '../../easings.ts';
+import { easingGraph, easingMath } from '../../easing-view.ts';
+---
+
+<Layout
+  title="Easing functions"
+  description="Understand easing with formulas, draggable graphs, and motion comparisons."
+  section="/easing"
+  id="easing-page"
+  accent="#527cb5"
+>
+  <header class="la-intro">
+    <span class="eyebrow">TIME & MOTION</span>
+    <h1>Easing functions</h1>
+    <p>
+      An easing function changes the pace of a transition. It turns elapsed time
+      into progress, so the same journey can start gently, settle smoothly,
+      overshoot, or bounce.
+    </p>
+  </header>
+  <section class="easing-introduction">
+    <h2>Time in, progress out</h2>
+    <div
+      class="la-math"
+      set:html={easingMath(
+        String.raw`t=\frac{\text{elapsed time}}{\text{duration}},\qquad v(t)=v_0+(v_1-v_0)E(t)`,
+      )}
+    />
+    <p>
+      Time progress t runs from 0 to 1. E(t) tells you how far the transition
+      has travelled between its start and end values. A steep graph means fast
+      change; a flat graph means slow change. Back and Elastic can temporarily
+      move outside the endpoint range.
+    </p>
+  </section>
+  <section class="la-meaning-cards">
+    <article>
+      <h2>Ease in</h2>
+      <p>
+        Build into the movement. For the smooth families, the start is slow and
+        the end is fast.
+      </p>
+    </article>
+    <article>
+      <h2>Ease out</h2>
+      <p>
+        Settle into the destination. The movement begins quickly and slows as it
+        arrives.
+      </p>
+    </article>
+    <article>
+      <h2>Ease in-out</h2>
+      <p>
+        Ease into and out of the movement. Here the ease-in profile is mirrored
+        across the second half; Back, Elastic, and Bounce add their
+        characteristic reversals.
+      </p>
+    </article>
+  </section>
+  <section class="easing-catalogue" aria-label="Easing families">
+    {easingFamilies.map((f) => {
+      const variants = easings.filter((e) => e.family === f.id);
+      const preview =
+        variants.find((e) => e.direction === 'out') ?? variants[0];
+      return (
+        <article class="easing-card" style={`--accent:${f.color}`}>
+          <h2>{f.name}</h2>
+          <p>{f.description}</p>
+          <a
+            href={easingUrl(preview)}
+            aria-label={`Explore ${preview.name}`}
+            set:html={easingGraph(preview, 0.35, true)}
+          />
+          <nav aria-label={`${f.name} variants`}>
+            {variants.map((e) => (
+              <a href={easingUrl(e)}>
+                {f.id === 'linear'
+                  ? 'Explore linear'
+                  : e.direction === 'in-out'
+                    ? 'In-out'
+                    : e.direction === 'in'
+                      ? 'In'
+                      : 'Out'}{' '}
+                →
+              </a>
+            ))}
+          </nav>
+        </article>
+      );
+    })}
+  </section>
+  <section class="la-foundations">
+    <h2>Easing a value versus shaping a path</h2>
+    <p>
+      An easing function controls when you reach each point. A geometric curve
+      controls where those points are. Combine them to move along a path at a
+      chosen pace.
+    </p>
+    <p>
+      CSS names such as <code>ease-in</code> and <code>ease-out</code> refer to
+      specific cubic Bézier timing functions. They are not exact aliases for
+      every mathematical family on this page.{' '}
+      <a
+        href="https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/easing-function"
+        target="_blank"
+        rel="noreferrer"
+      >
+        CSS easing reference ↗
+      </a>
+    </p>
+    <a class="la-start" href="/curves/bezier">
+      Explore Bézier paths →
+    </a>
+  </section>
+</Layout>
