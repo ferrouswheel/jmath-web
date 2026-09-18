@@ -1,4 +1,6 @@
 const TAU = Math.PI * 2;
+import { updateCode } from '../code-highlight.ts';
+import { shSnippet } from '../spherical-harmonics-snippets.ts';
 
 // Real SH basis, ordered by band: 1 + 3 + 5 + 7 coefficients.
 function basis(x: number, y: number, z: number) {
@@ -223,10 +225,14 @@ function renderSphere() {
   const axes=[{v:[1,0,0],label:'+X',color:'#d86664'},{v:[0,1,0],label:'+Y',color:'#52a879'},{v:[0,0,1],label:'+Z',color:'#587ac7'}];
   ctx.font=`600 ${10*dpr}px DM Sans, sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
   for(const axis of axes){
+    const facing=Math.abs(dot(axis.v,frame.forward)),alpha=Math.max(0,Math.min(1,(0.95-facing)/.2));
+    if(!alpha)continue;
     const ex=cx+dot(axis.v,frame.right)*radius*1.18,ey=cy-dot(axis.v,frame.up)*radius*1.18;
     const sx=cx+dot(axis.v,frame.right)*radius*1.02,sy=cy-dot(axis.v,frame.up)*radius*1.02;
+    ctx.globalAlpha=alpha;
     ctx.strokeStyle=axis.color;ctx.lineWidth=1.5*dpr;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
     ctx.fillStyle=axis.color;ctx.fillText(axis.label,ex,ey-9*dpr);
+    ctx.globalAlpha=1;
   }
   updateDirection();
 }
@@ -245,14 +251,23 @@ document.querySelectorAll<HTMLElement>('[data-basis-start]').forEach(row=>{
   for(let k=0;k<count;k++){
     const index=start+k, item=document.createElement('div');item.className='sh-basis-item';
     const canvas=document.createElement('canvas');canvas.width=184;canvas.height=176;canvas.dataset.basisIndex=String(index);item.append(canvas);
-    const label=document.createElement('span');label.textContent=basisLabel(index);item.append(label);row.append(item);
+    const label=document.createElement('span');label.textContent=basisLabel(index);item.append(label);
+    if(equatorMax(index)<1e-9)item.title=`${basisLabel(index)} is zero everywhere on the z = 0 equator`;
+    row.append(item);
     drawBasis(canvas,index);
   }
 });
 
+function equatorMax(index:number){let m=0;for(let i=0;i<64;i++){const a=TAU*i/64;m=Math.max(m,Math.abs(basis(Math.cos(a),Math.sin(a),0)[index]))}return m}
+
 function drawBasis(canvas:HTMLCanvasElement,index:number){
   const ctx=canvas.getContext('2d')!,cx=canvas.width/2,cy=canvas.height/2;
   ctx.clearRect(0,0,canvas.width,canvas.height);
+  if(equatorMax(index)<1e-9){
+    // The slice z = 0 vanishes identically; mark the tile instead of leaving it blank.
+    ctx.strokeStyle='#e4e3eb';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(cx,cy,52,0,TAU);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#b9bdc9';ctx.font='italic 26px Georgia,serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('≡ 0',cx,cy);return;
+  }
   ctx.strokeStyle='#e4e3eb';ctx.lineWidth=1;ctx.beginPath();ctx.arc(cx,cy,52,0,TAU);ctx.stroke();
   for(let side=0;side<2;side++){
     ctx.beginPath();
@@ -270,13 +285,18 @@ function drawBasis(canvas:HTMLCanvasElement,index:number){
 function drawMap(canvas: HTMLCanvasElement) {
   const ctx=canvas.getContext('2d')!, b=Number(canvas.dataset.shMap), img=ctx.createImageData(canvas.width,canvas.height);
   for(let y=0;y<canvas.height;y++)for(let x=0;x<canvas.width;x++){
+    // Longitude zero sits on +X and rises toward +Z, matching the 3D basis explorer.
     const lon=(x/canvas.width-.5)*TAU,lat=(.5-y/canvas.height)*Math.PI,c=Math.cos(lat);
-    const rgb=signal(c*Math.sin(lon),Math.sin(lat),c*Math.cos(lon),b),i=(y*canvas.width+x)*4;
+    const rgb=signal(c*Math.cos(lon),Math.sin(lat),c*Math.sin(lon),b),i=(y*canvas.width+x)*4;
     img.data[i]=rgb[0]*255;img.data[i+1]=rgb[1]*255;img.data[i+2]=rgb[2]*255;img.data[i+3]=255;
   }
   ctx.putImageData(img,0,0);ctx.strokeStyle='#ffffff33';ctx.setLineDash([3,4]);
   for(let i=1;i<4;i++){ctx.beginPath();ctx.moveTo(canvas.width*i/4,0);ctx.lineTo(canvas.width*i/4,canvas.height);ctx.stroke()}
   ctx.beginPath();ctx.moveTo(0,canvas.height/2);ctx.lineTo(canvas.width,canvas.height/2);ctx.stroke();
+  ctx.setLineDash([]);ctx.fillStyle='#ffffffc4';ctx.font='600 9px DM Sans, sans-serif';ctx.textAlign='center';
+  ctx.shadowColor='#00000059';ctx.shadowBlur=2;
+  ctx.fillText('−Z',canvas.width*.25,canvas.height-5);ctx.fillText('+X',canvas.width*.5,canvas.height-5);ctx.fillText('+Z',canvas.width*.75,canvas.height-5);
+  ctx.shadowColor='transparent';ctx.shadowBlur=0;
 }
 document.querySelectorAll<HTMLCanvasElement>('[data-sh-map]').forEach(drawMap);
 
@@ -285,4 +305,21 @@ updateDirection();
 updateCoefficientVisibility();
 redrawBases();
 requestRender();
+document.fonts.ready.then(requestRender);
+
+const codeElement = document.querySelector<HTMLElement>('#sh-code');
+document.querySelectorAll<HTMLButtonElement>('[data-sh-language]').forEach((button) => button.addEventListener('click', () => {
+  const language = button.dataset.shLanguage!;
+  document.querySelectorAll('[data-sh-language]').forEach((b) => b.classList.toggle('selected', b === button));
+  if (codeElement) updateCode(codeElement, shSnippet(language), language);
+}));
+document.querySelector('#sh-copy-code')?.addEventListener('click', async () => {
+  const status = document.querySelector('#sh-copy-status');
+  try {
+    await navigator.clipboard.writeText(codeElement?.textContent ?? '');
+    if (status) status.textContent = 'Copied.';
+  } catch {
+    if (status) status.textContent = 'Code selected. Press Ctrl+C or ⌘C to copy.';
+  }
+});
 window.addEventListener('beforeunload',()=>{cancelAnimationFrame(animation);cancelAnimationFrame(renderRequest)});

@@ -1,5 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import { highlightCode } from '../../code-highlight.ts';
+import { shLanguages, shSnippet } from '../../spherical-harmonics-snippets.ts';
 ---
 
 <Layout
@@ -71,7 +73,7 @@ import Layout from '../../layouts/Layout.astro';
           <circle cx="65" cy="50" r="3"/><text x="105" y="45">z = 0</text>
         </svg>
       </div>
-      <div><span class="sh-mini-label">DOMAIN: THE UNIT SPHERE S²</span><h3>The circle below is only one slice</h3><p>A full basis function accepts every unit direction <i>n</i> = (<i>x</i>, <i>y</i>, <i>z</i>) on a 3D sphere. The diagrams on this page restrict those directions to the equator, <i>z</i> = 0. They are useful for reading sign and magnitude, but they are <strong>not the complete 3D lobe</strong>.</p><a class="sh-3d-link" href="/spherical-harmonics/basis-3d">Open the interactive 3D basis explorer <span>→</span></a></div>
+      <div><span class="sh-mini-label">DOMAIN: THE UNIT SPHERE S²</span><h3>The circle below is only one slice</h3><p>A full basis function accepts every unit direction <i>n</i> = (<i>x</i>, <i>y</i>, <i>z</i>) on a 3D sphere. The diagrams on this page restrict those directions to the equator, <i>z</i> = 0. They are useful for reading sign and magnitude, but they are <strong>not the complete 3D lobe</strong>. Tiles marked <strong>≡ 0</strong> vanish everywhere on this slice.</p><a class="sh-3d-link" href="/spherical-harmonics/basis-3d">Open the interactive 3D basis explorer <span>→</span></a></div>
     </div>
     <div id="sh-sign-explainer" class="sh-sign-explainer">
       <div class="sh-sign-visual" aria-label="Interactive equatorial slice of Y one one">
@@ -125,6 +127,25 @@ import Layout from '../../layouts/Layout.astro';
       <article><span class="sh-icon">⊥</span><h3>Orthogonal pieces</h3><p>Each coefficient measures one independent pattern, so signals can be projected, stored and reconstructed cleanly.</p></article>
       <article><span class="sh-icon">☀</span><h3>Why graphics uses SH</h3><p>Diffuse lighting is naturally smooth. A handful of coefficients approximates environment light with no texture lookup.</p></article>
     </div>
+  </section>
+
+  <section class="code-section sh-code">
+    <div class="code-heading">
+      <div>
+        <h2>Implementation</h2>
+        <p>The orthonormal real basis through l = 3 used on this page, with band-limited RGB reconstruction. Directions are unit vectors in the y-up convention shown above.</p>
+      </div>
+      <button id="sh-copy-code" type="button" class="quiet-button">Copy code</button>
+    </div>
+    <div class="code-languages">
+      <Fragment set:html={Object.entries(shLanguages).map(([key, name]) => `<button type="button" data-sh-language="${key}"${key === 'js' ? ' class="selected"' : ''}>${name}</button>`).join('')} />
+    </div>
+    <p id="sh-code-note">Each basis function is a raw polynomial times a normalization constant — for example Y₂⁰ = 0.315·(3z² − 1) — chosen so that integrating the square of any basis function over the sphere gives exactly 1, and 0 against every other. Reconstruction sums every band before clamping for display.</p>
+    <pre
+      class="code-source"
+      tabindex="0"
+    ><code id="sh-code" data-code-language="js" set:html={highlightCode(shSnippet("js"), "js")} /></pre>
+    <p id="sh-copy-status" role="status"></p>
   </section>
 </Layout>
 

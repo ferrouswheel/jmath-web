@@ -5,14 +5,14 @@ import Layout from '../../layouts/Layout.astro';
   <div class="breadcrumb"><a href="/spherical-harmonics">Spherical harmonics</a><span>/</span> 3D basis explorer</div>
   <section class="sh3-hero">
     <div><div class="eyebrow">INTERACTIVE 3D EXPLORER</div><h1>See the whole basis</h1><p>Each surface is a radial plot of one real spherical harmonic over every direction on the unit sphere. Drag to orbit the camera; move <i>n</i> to sample the function.</p></div>
-    <div class="sh3-definition"><span>RADIAL SURFACE</span><code>p(n) = n |Y<sub>l</sub><sup>m</sup>(n)|</code><small>colour carries the sign</small></div>
+    <div class="sh3-definition"><span>RADIAL SURFACE</span><code>p(n) ∝ n |Y<sub>l</sub><sup>m</sup>(n)|</code><small>each surface is scaled to its own largest lobe · colour carries the sign</small><small>every basis function is N·P — P the raw polynomial, N the normalization so ∫|Y|²dΩ = 1</small></div>
   </section>
   <section class="sh3-workspace">
     <div class="sh3-view">
       <canvas id="sh3-canvas" width="840" height="650" aria-label="Rotatable three-dimensional spherical harmonic lobe"></canvas>
       <div class="sh3-view-top"><span id="sh3-title">Y₀⁰</span><small id="sh3-formula">constant</small></div>
       <div class="sh3-legend"><span><i class="positive"></i>positive</span><span><i class="negative"></i>negative</span><span><i class="sample"></i>sample n</span></div>
-      <div class="sh3-drag"><span>↔</span> drag to orbit</div>
+      <div class="sh3-drag"><span>↔</span> drag to orbit · drag the x/z point to move <i>n</i></div>
     </div>
     <aside class="sh3-panel">
       <div class="sh3-panel-label">BASIS FUNCTION</div><div id="sh3-basis-picker" class="sh3-picker"></div>
@@ -21,17 +21,18 @@ import Layout from '../../layouts/Layout.astro';
         <label><input id="sh3-wire-toggle" type="checkbox"/><span></span> Mesh wireframe</label>
         <label><input id="sh3-auto-toggle" type="checkbox"/><span></span> Auto orbit</label>
       </div>
+      <div class="sh3-opacity"><span>lobe opacity <output id="sh3-opacity-value">70%</output></span><input id="sh3-opacity" type="range" min="15" max="100" step="5" value="70"/></div>
       <div class="sh3-sample-controls">
         <div class="sh3-panel-label">SAMPLE DIRECTION n</div>
         <label><span>longitude <output id="sh3-lon-value">35°</output></span><input id="sh3-lon" type="range" min="-180" max="180" value="35"/></label>
         <label><span>latitude <output id="sh3-lat-value">24°</output></span><input id="sh3-lat" type="range" min="-90" max="90" value="24"/></label>
-        <div class="sh3-sample-readout"><span>n</span><output id="sh3-n-value">(0.75, 0.41, 0.52)</output><span>Y(n)</span><output id="sh3-y-value">+0.282</output></div>
+        <div class="sh3-sample-readout"><span>n</span><output id="sh3-n-value">(0.75, 0.41, 0.52)</output><span id="sh3-poly-label">1</span><output id="sh3-poly-value">+1.000</output><span id="sh3-y-label">Y₀⁰(n)</span><output id="sh3-y-value">+0.282</output></div>
       </div>
       <button id="sh3-reset-view" class="sh3-reset" type="button">Reset camera</button>
     </aside>
   </section>
   <section class="sh3-reading">
-    <article><span>01</span><h2>Direction is the input</h2><p>Every point on the unit sphere is a direction <i>n</i>. The white marker is the currently sampled direction.</p></article>
+    <article><span>01</span><h2>Direction is the input</h2><p>Every point on the unit sphere is a direction <i>n</i>. The white marker is the currently sampled direction; the small foot on the equatorial plane carries its <i>x</i>/<i>z</i> components and the solid leg is <i>y</i>. Drag the foot to steer <i>n</i> — longitude is the foot's angle, latitude its distance from the centre — or use the sliders.</p></article>
     <article><span>02</span><h2>Radius is magnitude</h2><p>The distance from the origin is proportional to <i>|Y<sub>l</sub><sup>m</sup>(n)|</i>. Pinches are zeros of the function.</p></article>
     <article><span>03</span><h2>Colour is sign</h2><p>Purple regions return positive values; coral regions return negative values. The surface itself cannot have a negative radius.</p></article>
   </section>
