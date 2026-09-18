@@ -1,0 +1,131 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout
+  title="Spherical harmonics"
+  description="An interactive visual guide to spherical harmonics, directional RGB and band-limited reconstruction."
+  id="sh-page"
+  section="/spherical-harmonics"
+  accent="#7568d8"
+>
+  <div class="breadcrumb">Toolkit <span>/</span> Spherical harmonics</div>
+
+  <section class="sh-hero">
+    <div>
+      <div class="eyebrow">FUNCTIONS ON A SPHERE</div>
+      <h1>Spherical harmonics</h1>
+      <p>Build a smooth directional signal from a small set of coefficients. Rotate the sphere to see how each RGB channel changes with direction.</p>
+      <div class="sh-hero-pills" aria-label="Key properties">
+        <span>orthogonal basis</span><span>compact lighting</span><span>rotation friendly</span>
+      </div>
+    </div>
+    <div class="sh-orbit-mark" aria-hidden="true"><i></i><b>Y<sub>l</sub><sup>m</sup></b></div>
+  </section>
+
+  <section class="sh-section" aria-labelledby="directional-title">
+    <div class="sh-section-heading">
+      <div><span class="sh-step">01</span><h2 id="directional-title">Directional RGB</h2></div>
+      <p>Each color channel stores its own set of coefficients. The constant SH0 term provides the base shading; higher bands add broad to increasingly fine directional detail.</p>
+    </div>
+
+    <div class="sh-lab">
+      <div class="sh-stage">
+        <canvas id="sh-sphere" width="700" height="560" aria-label="Interactive spherical harmonics RGB sphere"></canvas>
+        <div class="sh-drag-hint"><span>↔</span> drag to orbit camera</div>
+      </div>
+      <div class="sh-controls">
+        <div class="sh-control-head"><div><span class="sh-live-dot"></span> LIVE SIGNAL</div><button id="sh-reset" type="button">Reset view</button></div>
+        <h3>Bands included</h3>
+        <div class="sh-band-tabs" role="group" aria-label="Maximum spherical harmonic band">
+          <button type="button" data-band="0">SH0<small>3 RGB coeffs</small></button>
+          <button type="button" data-band="1">SH1<small>12 RGB coeffs</small></button>
+          <button type="button" data-band="2">SH2<small>27 RGB coeffs</small></button>
+          <button type="button" data-band="3" class="selected">SH3<small>48 RGB coeffs</small></button>
+        </div>
+        <details class="sh-palette" open>
+          <summary><span>Coefficient colours</span><small>RGB vector per basis</small></summary>
+          <div class="sh-palette-head"><span>basis</span><span>colour</span></div>
+          <div id="sh-coefficient-colours" class="sh-colour-list"></div>
+          <button id="sh-reset-colours" class="sh-reset-colours" type="button">Reset coefficient colours</button>
+        </details>
+        <div class="sh-readout">
+          <span>CAMERA POSITION IN WORLD SPACE</span><output id="sh-direction">x 0.42&nbsp;&nbsp; y 0.18&nbsp;&nbsp; z 0.89</output>
+        </div>
+        <label class="sh-toggle"><input id="sh-auto" type="checkbox" /><span></span> Auto rotate</label>
+        <div class="sh-channel-key"><span><i class="red"></i>Red coefficients</span><span><i class="green"></i>Green coefficients</span><span><i class="blue"></i>Blue coefficients</span></div>
+        <p class="sh-note"><strong>The sphere and RGB field stay fixed in world space.</strong> Dragging moves the camera. The labelled axes and coordinate grid reveal that change of viewpoint. SH0 is always present as the direction-independent average color.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sh-section" aria-labelledby="basis-title">
+    <div class="sh-section-heading">
+      <div><span class="sh-step">02</span><h2 id="basis-title">The basis, one slice at a time</h2></div>
+      <p>These diagrams are 2D equatorial slices through the 16 real 3D basis functions. Each positive lobe uses its chosen coefficient colour; muted lobes are negative.</p>
+    </div>
+    <div class="sh-domain-note">
+      <div class="sh-slice-sphere" aria-hidden="true">
+        <svg viewBox="0 0 130 100">
+          <circle cx="65" cy="50" r="39"/><ellipse cx="65" cy="50" rx="39" ry="12"/><path d="M65 6V94M20 50H110"/>
+          <circle cx="65" cy="50" r="3"/><text x="105" y="45">z = 0</text>
+        </svg>
+      </div>
+      <div><span class="sh-mini-label">DOMAIN: THE UNIT SPHERE S²</span><h3>The circle below is only one slice</h3><p>A full basis function accepts every unit direction <i>n</i> = (<i>x</i>, <i>y</i>, <i>z</i>) on a 3D sphere. The diagrams on this page restrict those directions to the equator, <i>z</i> = 0. They are useful for reading sign and magnitude, but they are <strong>not the complete 3D lobe</strong>.</p><a class="sh-3d-link" href="/spherical-harmonics/basis-3d">Open the interactive 3D basis explorer <span>→</span></a></div>
+    </div>
+    <div id="sh-sign-explainer" class="sh-sign-explainer">
+      <div class="sh-sign-visual" aria-label="Interactive equatorial slice of Y one one">
+        <span class="sh-slice-badge">2D SLICE · z = 0</span>
+        <svg viewBox="0 0 390 150">
+          <defs><linearGradient id="sh-positive-fill" x1="0" x2="1"><stop stop-color="var(--example-colour)" stop-opacity=".45"/><stop offset="1" stop-color="var(--example-colour)" stop-opacity=".95"/></linearGradient></defs>
+          <path class="sh-sign-axis" d="M24 75H366"/><path class="sh-sign-tick" d="M195 67V83"/>
+          <path class="sh-positive-lobe" d="M195 75C226 27 292 25 337 75C292 125 226 123 195 75Z"/>
+          <path class="sh-negative-lobe" d="M195 75C164 27 98 25 53 75C98 125 164 123 195 75Z"/>
+          <circle class="sh-direction-guide" cx="195" cy="75" r="57"/>
+          <path id="sh-direction-ray" class="sh-direction-ray" d="M195 75L252 75"/>
+          <circle class="sh-sign-origin" cx="195" cy="75" r="4"/>
+          <circle id="sh-direction-dot" class="sh-direction-dot" cx="252" cy="75" r="7"/>
+          <text x="303" y="26" text-anchor="middle">Y(n) &gt; 0</text><text x="87" y="26" text-anchor="middle">Y(n) &lt; 0</text>
+          <text x="303" y="140" text-anchor="middle">adds colour</text><text x="87" y="140" text-anchor="middle">subtracts colour</text>
+          <text x="195" y="101" text-anchor="middle">0</text>
+          <text class="sh-drag-n" x="252" y="59" text-anchor="middle">drag n</text>
+        </svg>
+      </div>
+      <div class="sh-sign-copy">
+        <span class="sh-mini-label">WHY TWO LOBES?</span>
+        <h3>A basis slice is signed</h3>
+        <p>Drag the marker <i>n</i> around the equator of <i>Y</i><sub>1</sub><sup>1</sup>, where <i>n</i> = (<i>x</i>, <i>y</i>, 0). The basis returns a signed number for that direction, which multiplies the chosen RGB coefficient <i>c</i>:</p>
+        <div class="sh-sign-equation"><i>contribution</i> = <b class="sh-equation-swatch"></b><i>c</i> × <i>Y(n)</i></div>
+        <div class="sh-live-sample" aria-live="polite"><span><i>n</i> = <output id="sh-sample-direction">(+1.00, +0.00)</output></span><span><i>Y</i><sub>1</sub><sup>1</sup>(<i>n</i>) = <output id="sh-sample-value">+0.489</output></span><strong id="sh-sample-operation">adds RGB</strong></div>
+        <div class="sh-sign-cases"><span><b>Positive value</b> adds that RGB colour.</span><span><b>Negative value</b> subtracts the same RGB values in linear space.</span></div>
+        <p class="sh-sign-footnote">All basis contributions are summed first. Only the final display colour is clamped to the visible RGB range.</p>
+      </div>
+    </div>
+    <div class="sh-basis-card">
+      <div class="sh-basis-card-head"><span>Equatorial cross-sections</span><code>n = (cos θ, sin θ, 0)</code></div>
+      <div class="sh-band-row"><strong>l = 0</strong><div class="sh-basis-grid one" data-basis-start="0"></div></div>
+      <div class="sh-band-row"><strong>l = 1</strong><div class="sh-basis-grid three" data-basis-start="1"></div></div>
+      <div class="sh-band-row"><strong>l = 2</strong><div class="sh-basis-grid five" data-basis-start="4"></div></div>
+      <div class="sh-band-row"><strong>l = 3</strong><div class="sh-basis-grid seven" data-basis-start="9"></div></div>
+    </div>
+  </section>
+
+  <section class="sh-section" aria-labelledby="reconstruction-title">
+    <div class="sh-section-heading">
+      <div><span class="sh-step">03</span><h2 id="reconstruction-title">A signal comes into focus</h2></div>
+      <p>Low bands capture the average and dominant direction. Each new band adds angular detail—the spherical equivalent of adding higher frequencies.</p>
+    </div>
+    <div class="sh-reconstruction">
+      {[0, 1, 2, 3].map((band) => (
+        <article><div class="sh-map"><canvas width="360" height="176" data-sh-map={band}></canvas></div><div><b>Through SH{band}</b><span>{[3,12,27,48][band]} RGB coefficients</span></div></article>
+      ))}
+    </div>
+    <div class="sh-explainer-grid">
+      <article><span class="sh-icon">≈</span><h3>Frequency bands</h3><p>Band <i>l</i> contains <i>2l + 1</i> functions—and three coefficients per function for RGB. Higher bands vary more rapidly around the sphere.</p></article>
+      <article><span class="sh-icon">⊥</span><h3>Orthogonal pieces</h3><p>Each coefficient measures one independent pattern, so signals can be projected, stored and reconstructed cleanly.</p></article>
+      <article><span class="sh-icon">☀</span><h3>Why graphics uses SH</h3><p>Diffuse lighting is naturally smooth. A handful of coefficients approximates environment light with no texture lookup.</p></article>
+    </div>
+  </section>
+</Layout>
+
+<script src="../../client/spherical-harmonics.ts"></script>
